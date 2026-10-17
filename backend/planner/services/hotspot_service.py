@@ -6,6 +6,7 @@ import time
 import h3
 from rest_framework.exceptions import ValidationError
 from tzfpy import get_tz
+from django.core.cache import cache
 
 from planner.api.serializers import PlanSerializer
 from planner.domain.corridors import CORRIDORS, connected_points
@@ -18,6 +19,8 @@ from .plan_service import create_plan
 
 CACHE_KEY = 'hotspot:v3'
 CACHE_TTL = 3600
+# A failed scan (cold instance, slow provider) is retried soon instead of hiding the demo for an hour.
+FAILURE_TTL = 300
 SCAN_BUDGET_S = 20.0
 MIN_COVERAGE = 0.8
 VERIFY_BUDGET_S = 30.0
@@ -38,6 +41,11 @@ def verified_exposure(plan: dict) -> dict | None:
                         if miles[key] > 0)
             return {'max_level': level, 'high_or_worse_mi': high, 'route_label': route['label']}
     return None
+
+
+COVERAGE_REASON = 'Forecast coverage below 80% for the 48-hour corridor scan; try again later.'
+BUDGET_REASON = 'Daily weather budget exhausted before 80% corridor forecast coverage was reached.'
+TRANSIENT_REASONS = frozenset({COVERAGE_REASON, BUDGET_REASON})
 
 
 def unavailable(reason: str) -> dict:
@@ -68,8 +76,8 @@ def build_hotspot() -> dict:
     known = sum(peak is not None for peak in peaks.values())
     if not points or known / len(points) < MIN_COVERAGE:
         if any(w['code'] == 'WEATHER_BUDGET' for w in warnings):
-            return unavailable('Daily weather budget exhausted before 80% corridor forecast coverage was reached.')
-        return unavailable('Forecast coverage below 80% for the 48-hour corridor scan; try again later.')
+            return unavailable(BUDGET_REASON)
+        return unavailable(COVERAGE_REASON)
     # A corridor's score is its worst point: severity first, normalized exceedance second.
     # Catalogue order supplies deterministic ties.
     candidates = []
@@ -163,6 +171,9 @@ def build_hotspot() -> dict:
 
 def get_hotspot() -> dict:
     try:
-        return singleflight(CACHE_KEY, CACHE_TTL, build_hotspot, wait_s=SCAN_BUDGET_S + VERIFY_BUDGET_S + 2)
+        result = singleflight(CACHE_KEY, CACHE_TTL, build_hotspot, wait_s=SCAN_BUDGET_S + VERIFY_BUDGET_S + 2)
+        if not result['available'] and result['reason'] in TRANSIENT_REASONS:
+            cache.touch(CACHE_KEY, FAILURE_TTL)  # Never extends: touching again only resets to the same short window.
+        return result
     except ProviderError:
         return unavailable('Weather providers are temporarily unavailable; try again later.')

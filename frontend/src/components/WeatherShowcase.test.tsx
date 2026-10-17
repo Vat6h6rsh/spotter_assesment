@@ -10,7 +10,7 @@ vi.mock("../api/client", () => ({ getWeatherHotspot: mocks.hotspot, geocode: vi.
 vi.mock("../state/serverWake", () => ({ useServerWake: () => mocks.wake }));
 vi.mock("../state/planner", () => ({ usePlanner: () => ({ phase: "idle", demo: false }), planner: { submit: mocks.submit } }));
 import { PlanForm } from "./PlanForm";
-import { WeatherShowcase, SHOWCASE_DATE_KEY } from "./WeatherShowcase";
+import { WeatherShowcase, SHOWCASE_DATE_KEY, SHOWCASE_LAST_KEY } from "./WeatherShowcase";
 
 const title = "See today's toughest trucking weather";
 function form() { return render(<PlanForm initial={null} onComplete={vi.fn()} onClose={vi.fn()} />); }
@@ -133,6 +133,25 @@ describe("daily weather showcase", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Today's toughest weather" }));
     expect(screen.getByRole("dialog", { name: title })).toBeVisible();
     expect(localStorage.getItem(SHOWCASE_DATE_KEY)).toBeNull();
+  });
+  it("keeps the button when nothing is available, explains why, and retries on request", async () => {
+    mocks.hotspot.mockResolvedValueOnce({ available: false, reason: "Forecast coverage below 80% for the 48-hour corridor scan; try again later." });
+    form(); await waitFor(() => expect(mocks.hotspot).toHaveBeenCalledOnce());
+    fireEvent.click(await screen.findByRole("button", { name: "Today's toughest weather" }));
+    const empty = screen.getByRole("dialog", { name: "Today's toughest trucking weather" });
+    expect(empty).toHaveTextContent("No standout trucking weather to show right now."); expect(empty).toHaveTextContent("coverage below 80%");
+    fireEvent.click(within(empty).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("dialog", { name: title })).toBeVisible();
+    expect(mocks.hotspot).toHaveBeenCalledTimes(2); expect(localStorage.getItem(SHOWCASE_DATE_KEY)).toBeNull();
+  });
+  it("a remounted form (Edit trip) reuses this tab's last trip when a refresh is unavailable", async () => {
+    localStorage.setItem(SHOWCASE_DATE_KEY, "2026-10-17");
+    const first = form(); await waitFor(() => expect(sessionStorage.getItem(SHOWCASE_LAST_KEY)).not.toBeNull()); first.unmount();
+    mocks.hotspot.mockResolvedValue({ available: false, reason: "Forecast coverage below 80% for the 48-hour corridor scan; try again later." });
+    render(<WeatherShowcase demo={false} busy={false} autoOpen={false} onPlan={vi.fn()} onOwn={vi.fn()} />);
+    await waitFor(() => expect(mocks.hotspot).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole("button", { name: "Today's toughest weather" }));
+    expect(screen.getByRole("dialog", { name: title })).toHaveTextContent(makeMockHotspot().headline);
   });
   it("keeps planning usable if the showcase request fails", async () => {
     mocks.hotspot.mockRejectedValue(new Error("Endpoint unavailable")); form();

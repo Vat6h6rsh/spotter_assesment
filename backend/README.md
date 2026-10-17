@@ -34,8 +34,9 @@ pipeline: recommended or fastest must show >=25 High-or-worse miles or any No Tr
 `suggested_trip.verified` records max_level, high_or_worse_mi and route_label. Try at
 most three main candidates; all main/extra verification shares a further 30-second
 budget after the scan. Failed/unverified extras are omitted; no verified main gives
-available:false. Both branches, including verification evidence, cache for one hour
-under hotspot:v3. Plan-result caching remains 10 minutes, so a later replan may
+available:false. Results, including verification evidence and "nothing notable", cache
+for one hour under hotspot:v3; a failed scan (coverage below 80% or budget exhausted) caches
+for only 5 minutes (FAILURE_TTL), so a cold-start blip doesn't hide the demo for an hour. Plan-result caching remains 10 minutes, so a later replan may
 reflect newer weather. In-flight provider work can finish caching after a deadline.
 
 Warm the cache before the first welcome request with:

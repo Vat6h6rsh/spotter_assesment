@@ -242,6 +242,24 @@ def test_forecast_failure_suppresses_popup(scan):
     assert service.get_hotspot() == {'available': False, 'reason': 'Forecast coverage below 80% for the 48-hour corridor scan; try again later.'}
 
 
+def test_failed_scan_is_cached_briefly(scan, monkeypatch):
+    ttls = []
+    monkeypatch.setattr(service.cache, 'touch', lambda key, ttl: ttls.append((key, ttl)) or True)
+    scan[1].mock(return_value=httpx.Response(403))
+    assert service.get_hotspot()['reason'] == service.COVERAGE_REASON
+    assert ttls == [(service.CACHE_KEY, service.FAILURE_TTL)] and service.FAILURE_TTL < service.CACHE_TTL
+
+
+def test_nothing_notable_keeps_the_full_cache_ttl(scan, monkeypatch):
+    touched = []
+    monkeypatch.setattr(service.cache, 'touch', lambda *args: touched.append(args) or True)
+    scan[0]['gust'] = 20
+    scan[2].mock(return_value=httpx.Response(200, json={'features': []}))
+    result = service.get_hotspot()
+    assert result['available'] is False and result['reason'] not in service.TRANSIENT_REASONS
+    assert touched == []
+
+
 def test_nothing_notable_is_cached_false(scan, client):
     scan[0]['gust'] = 20
     scan[2].mock(return_value=httpx.Response(200, json={'features': []}))

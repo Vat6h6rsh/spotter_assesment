@@ -30,6 +30,19 @@ function rememberHint() {
   hintedWithoutStorage = true;
   try { sessionStorage.setItem(SHOWCASE_HINT_KEY, "1"); } catch { /* Module fallback when storage is blocked. */ }
 }
+/** The last good result for this tab, so a remounted form (Edit trip) keeps the button usable. */
+export const SHOWCASE_LAST_KEY = "spotter.weather.showcase.last";
+const LAST_MAX_AGE_MS = 3600_000;
+let lastWithoutStorage: { at: number; data: AvailableHotspot } | null = null;
+function lastHotspot(): AvailableHotspot | null {
+  let saved = lastWithoutStorage;
+  try { saved = JSON.parse(sessionStorage.getItem(SHOWCASE_LAST_KEY) || "null"); } catch { /* Module fallback. */ }
+  return saved?.data?.available && Date.now() - saved.at < LAST_MAX_AGE_MS ? saved.data : null;
+}
+function rememberHotspot(data: AvailableHotspot) {
+  lastWithoutStorage = { at: Date.now(), data };
+  try { sessionStorage.setItem(SHOWCASE_LAST_KEY, JSON.stringify(lastWithoutStorage)); } catch { /* Module fallback when storage is blocked. */ }
+}
 function rememberShown() {
   shownWithoutStorage = today();
   try { localStorage.setItem(SHOWCASE_DATE_KEY, today()); } catch { /* Session fallback when storage is blocked. */ }
@@ -41,7 +54,8 @@ export function WeatherShowcase({ demo, busy, autoOpen = true, onPlan, onOwn }: 
   onOwn: () => void;
 }) {
   const wake = useServerWake();
-  const [hotspot, setHotspot] = useState<AvailableHotspot | null>(null);
+  const [hotspot, setHotspot] = useState<AvailableHotspot | null>(lastHotspot);
+  const [lookup, setLookup] = useState<{ attempt: number; status: "loading" | "done"; reason: string }>({ attempt: 0, status: "loading", reason: "" });
   const [open, setOpen] = useState(false), [selected, setSelected] = useState(0);
   const [hint, setHint] = useState<"glow" | "tip" | null>(null);
   const busyRef = useRef(busy), autoOpenRef = useRef(autoOpen);
@@ -49,13 +63,20 @@ export function WeatherShowcase({ demo, busy, autoOpen = true, onPlan, onOwn }: 
   useEffect(() => {
     if (wake.status !== "ready") return;
     const controller = new AbortController();
+    const first = lookup.attempt === 0;
     void getWeatherHotspot(controller.signal, demo).then(data => {
-      if (controller.signal.aborted || !data.available) return;
-      setHotspot(data);
-      if (autoOpenRef.current && !busyRef.current && !shownToday()) { rememberShown(); setOpen(true); }
-    }).catch(() => { /* Optional demo helper: never interrupt planning on failure. */ });
+      if (controller.signal.aborted) return;
+      // An unavailable or failed refresh never hides a trip this tab already received.
+      setLookup(current => ({ ...current, status: "done", reason: data.available ? "" : data.reason }));
+      if (!data.available) return;
+      setHotspot(data); rememberHotspot(data);
+      if (first && autoOpenRef.current && !busyRef.current && !shownToday()) { rememberShown(); setOpen(true); }
+    }).catch(() => {
+      // Optional demo helper: never interrupt planning on failure.
+      if (!controller.signal.aborted) setLookup(current => ({ ...current, status: "done", reason: "The weather check didn't respond. Try again in a minute." }));
+    });
     return () => controller.abort();
-  }, [wake.status, demo]);
+  }, [wake.status, demo, lookup.attempt]);
   useEffect(() => {
     // Point the driver at the button once the auto-shown dialog (if any) is out of the way.
     if (!hotspot || open || busy || hintPlayed()) return;
@@ -68,13 +89,23 @@ export function WeatherShowcase({ demo, busy, autoOpen = true, onPlan, onOwn }: 
   const examples: HotspotExample[] = hotspot ? [hotspot, ...alternatives] : [];
   const example = examples[selected] ?? hotspot;
   const trip = example?.suggested_trip;
+  const checking = wake.status !== "unavailable" && lookup.status === "loading";
+  const emptyReason = wake.status === "unavailable" ? "The server isn't responding right now. Try again in a minute." : lookup.reason;
   return <>
-    {hotspot && <div className="showcase-trigger">
+    <div className="showcase-trigger">
       <button type="button" className="button secondary showcase-button" data-hint={hint ?? undefined} aria-describedby={hint === "tip" ? "showcase-tip" : undefined} disabled={busy} onClick={() => { rememberHint(); setHint(null); setSelected(0); setOpen(true); }}>
         <Icon name="rain" size={20} />Today's toughest weather
       </button>
       {hint === "tip" && <span id="showcase-tip" role="tooltip" className="showcase-tip">Plan a real trip through today's worst US weather</span>}
-    </div>}
+    </div>
+    {open && !busy && !hotspot && <Modal title="Today's toughest trucking weather" closeLabel="Close weather showcase" className="weather-showcase" onClose={() => setOpen(false)}>
+      <p aria-live="polite">{checking ? "Checking today's weather across US truck corridors…" : "No standout trucking weather to show right now."}</p>
+      {!checking && emptyReason && <p className="fine-print">{emptyReason}</p>}
+      <div className="showcase-actions">
+        <button type="button" className="button primary" disabled={checking} onClick={() => setLookup(current => ({ attempt: current.attempt + 1, status: "loading", reason: "" }))}>{checking ? "Checking…" : "Try again"}</button>
+        <button type="button" className="button secondary" onClick={() => setOpen(false)}>Close</button>
+      </div>
+    </Modal>}
     {open && !busy && example && trip && <Modal title="See today's toughest trucking weather" closeLabel="Close weather showcase" className="weather-showcase" onClose={() => setOpen(false)}>
       <div className="showcase-weather">
         <WeatherIcon icon={example.hazard === "wind" ? "wind" : example.hazard === "snow" ? "extreme-snow" : example.hazard === "rain" ? "extreme-rain" : "thunderstorms-rain"} size={80} />
