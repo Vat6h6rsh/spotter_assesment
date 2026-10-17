@@ -158,9 +158,11 @@
 .cancel-plan { width: 100%; justify-content: center; }
 .form-footnote { display: flex; align-items: flex-start; justify-content: center; gap: var(--sp-1); margin-top: var(--sp-2); color: var(--muted); font-size: var(--fs-caption); line-height: 1.333333; }
 .loading-skeleton { display: grid; gap: var(--sp-2); padding: var(--sp-4); }
-.skeleton-verdict, .skeleton-card { background: var(--surface2); border-radius: var(--r-md); }
-.skeleton-verdict { height: 140px; }
-.skeleton-card { height: 120px; }
+.skeleton-verdict, .skeleton-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--sp-4); animation: waiting-pulse 1.8s ease-in-out infinite; }
+.skeleton-verdict { height: 250px; background: var(--surface2); }
+.skeleton-card { height: 118px; display: grid; align-content: center; gap: var(--sp-3); }
+.skeleton-card span { height: var(--sp-2); width: 80%; background: var(--surface2); border-radius: var(--r-sm); }
+.skeleton-card span + span { width: 55%; }
 .sheet-content:has(.loading-skeleton) .route-panel { display: none; }
 .forecast-clock { position: relative; flex-shrink: 0; background: var(--surface); border-top: 1px solid var(--border); z-index: 4; }
 .clock-controls { height: 64px; display: grid; grid-template-columns: 40px auto minmax(120px, 1fr) auto; align-items: center; gap: var(--sp-4); padding: var(--sp-3) var(--sp-6); }
@@ -443,3 +445,48 @@ input.forecast-slider { --position: 0%; appearance: none; min-height: 44px; heig
 @media (forced-colors: active) {
   .heat-swatch-hatch { forced-color-adjust: none; opacity: 1; background: repeating-linear-gradient(var(--swatch-angle), CanvasText 0 2px, Canvas 2px 6px); }
 }
+
+/* Waiting UI uses existing theme pairs, including muted text at full contrast. */
+.server-wake-card, .planning-wait-card { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--sp-4); display: grid; gap: var(--sp-3); }
+.server-wake-card { margin: var(--sp-3); }
+.waiting-heading, .waiting-actions { display: flex; align-items: center; gap: var(--sp-3); justify-content: space-between; }
+.server-wake-card h2, .planning-wait-card h2 { font-size: var(--fs-body-lg); }
+.waiting-heading > .num { color: var(--muted); white-space: nowrap; }
+.wake-estimate { height: var(--sp-1); border-radius: var(--r-full); overflow: hidden; background: var(--surface2); }
+.wake-estimate > span { display: block; height: 100%; background: var(--primary); transition: width 1s var(--ease-standard); }
+.wake-estimate.is-indeterminate > span { transform-origin: left; animation: wake-sweep 4s ease-in-out infinite; }
+.server-wake-card.is-ready { animation: wake-ready 400ms var(--ease-exit) forwards; }
+.waiting-tip { min-height: 48px; animation: waiting-fade var(--dur-slow) var(--ease-enter); }
+.waiting-road { position: relative; height: 72px; overflow: hidden; color: var(--muted); }
+.waiting-road.compact { height: 48px; }
+.waiting-sky { position: absolute; left: calc(50% + var(--sp-6)); top: 0; animation: waiting-fade var(--dur-slow) var(--ease-enter); }
+.waiting-truck { position: absolute; bottom: var(--sp-2); left: calc(50% - var(--sp-3)); animation: truck-idle 2s ease-in-out infinite; }
+.waiting-dashes { position: absolute; bottom: var(--sp-1); left: 0; right: 0; height: 2px; background: repeating-linear-gradient(90deg, var(--muted) 0 12px, transparent 12px 24px); animation: waiting-road 2s linear infinite; }
+.planning-wait-overlay { position: absolute; inset: var(--sp-12) var(--sp-12) var(--sp-10) var(--sp-3); display: grid; place-items: center; pointer-events: none; z-index: 4; }
+.planning-wait-card { width: min(100%, 440px); max-height: 100%; overflow-y: auto; box-shadow: var(--elev-2); }
+.planning-wait-card button { pointer-events: auto; }
+.planning-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--sp-2); font-size: var(--fs-body); }
+.planning-steps li { display: flex; align-items: center; gap: var(--sp-2); color: var(--muted); }
+.planning-steps .is-current { color: var(--text); font-weight: 500; }
+.step-dot { flex-shrink: 0; width: 16px; height: 16px; display: grid; place-items: center; }
+.step-dot::after { content: ""; width: var(--sp-1); height: var(--sp-1); background: currentColor; border-radius: var(--r-full); }
+.is-next .step-dot::after { background: none; border: 1px solid currentColor; }
+.is-paused *, .is-paused *::before, .is-paused *::after { animation-play-state: paused !important; }
+@keyframes waiting-road { to { background-position: -24px 0; } }
+@keyframes truck-idle { 50% { transform: translateY(-1px); } }
+@keyframes waiting-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes waiting-pulse { 50% { opacity: .55; } }
+@keyframes wake-sweep { 50% { transform: translateX(10%); } }
+@keyframes wake-ready { to { opacity: 0; } }
+@media (max-width: 1023px) {
+  .planning-wait-overlay { inset: var(--sp-12) var(--sp-12) var(--sp-2) var(--sp-2); }
+  .planning-wait-card { padding: var(--sp-3); gap: var(--sp-2); }
+  .planning-wait-card .waiting-road { height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .waiting-road *, .waiting-tip, .skeleton-verdict, .skeleton-card, .wake-estimate > span, .server-wake-card.is-ready, .planning-steps .spinner { animation: none; transition: none; }
+}
+
+.waiting-sky.sky-out { opacity: 0; animation-name: waiting-fade-out; }
+@keyframes waiting-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .waiting-sky.sky-out { display: none; } }

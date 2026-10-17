@@ -14,7 +14,8 @@ import { CompareModal } from "./components/CompareModal";
 import { Settings } from "./components/Settings";
 import { Icon } from "./components/Icon";
 import { PanelErrorBoundary } from "./components/PanelErrorBoundary";
-import { ServerWakeChip } from "./components/ServerWakeChip";
+import { ServerWakeCard, ServerWakeChip } from "./components/ServerWakeChip";
+import { PlanningWait } from "./components/PlanningWait";
 import "./App.css";
 const MapView = lazy(() => import("./map/MapView"));
 type Snap = "peek" | "half" | "full";
@@ -59,6 +60,7 @@ function App() {
     let previous = planner.get();
     return planner.subscribe(() => {
       const next = planner.get();
+      if (next.startedAt !== previous.startedAt && next.phase === "routes") setSnap("peek");
       if (next.plan && next.plan.plan_id !== previous.plan?.plan_id) {
         setEditing(false); setCollapsed(false); setSnap("peek"); setCheckpoints(false); setPreviewRoute(null);
       }
@@ -91,7 +93,7 @@ function App() {
         {mobile && <button className="mobile-edit icon-button" aria-label="Edit trip" title="Edit trip" onClick={edit}><Icon name="edit" /></button>}
         <button className={page === "settings" ? "active" : ""} aria-label="Settings" title="Settings" aria-current={page === "settings" ? "page" : undefined} onClick={() => { if (drive.get().session) drive.end(); timeline.play(false); setPage("settings"); }}><Icon name="settings" /><span>Settings</span></button>
       </nav>
-      <div className="header-right" aria-live="polite">
+      <div className="header-right">
         <ServerWakeChip />
         {plan && !plan.providers.routing.truck_aware && <span className="header-chip car-chip" title="Car routing: truck restrictions not applied"><Icon name="warning" size={16} /><span>Car routing<span className="sr-only">: truck restrictions not applied</span></span></span>}
         {offline && <span className="header-chip"><Icon name="offline" size={16} />Offline</span>}
@@ -134,6 +136,7 @@ function App() {
             </button>}
             {mobile && (cached || offline) && plan && snap === "peek" && <div className="saved-chip num">Saved {localTime(plan.created_at, plan.inputs.origin_tz, false)}{!offline && <button onClick={() => planner.retry()}>Refresh</button>}</div>}
             <div className="sheet-content">
+              <ServerWakeCard />
               <div className="status-stack" aria-live="polite">
                 {(cached || offline) && plan && <div className="banner neutral"><span>{offline ? "Offline: showing your last plan" : "Saved plan"} from <time dateTime={plan.created_at}>{localTime(plan.created_at, plan.inputs.origin_tz, false)}</time>.</span>{!offline && <button onClick={() => planner.retry()}>Refresh</button>}</div>}
                 {error && <div className="banner error-banner" role="alert"><span>{error}</span><button onClick={() => planner.retry()}>Retry</button></div>}
@@ -142,7 +145,7 @@ function App() {
                 {plan?.recommendation.status === "insufficient_data" && <div className="banner warning-banner"><Icon name="help" size={16} /><span>Not enough weather data to recommend a route. Review coverage and retry.</span><button onClick={() => planner.retry()}>Retry</button></div>}
               </div>
               {mobile && checkpoints && route && plan ? drawer : <PanelErrorBoundary label="Route panel">{editing ? <PlanForm key={plan?.plan_id ?? "new"} initial={plan} onComplete={() => setEditing(false)} onClose={() => setEditing(false)} /> : <RoutePanel onCompare={() => setCompare(true)} onCheckpoints={openList} onCollapse={() => setCollapsed(true)} onPreview={setPreviewRoute} />}</PanelErrorBoundary>}
-              {planBusy && <div className="loading-skeleton" role="status" aria-label="Loading routes and weather"><div className="skeleton-verdict" />{[0, 1, 2].map(i => <div className="skeleton-card" key={i} />)}</div>}
+              {planBusy && <div className="loading-skeleton" aria-hidden="true"><div className="skeleton-verdict" />{[0, 1, 2].map(i => <div className="skeleton-card" key={i}><span /><span /></div>)}</div>}
             </div>
             {mobile && clock}
           </aside>
@@ -150,7 +153,7 @@ function App() {
           {!mobile && checkpoints && route && plan && drawer}
         </div>
         {!mobile && clock}
-        <div className="sr-only" role="status">{phase === "routes" ? "Finding routes…" : phase === "weather" ? "Checking weather along your routes…" : phase === "heatmap" && plan ? `Weather checked at ${plan.routes.reduce((n, r) => n + r.checkpoints.length, 0)} checkpoints. Building corridor heatmap…` : ""}</div>
+        <PlanningWait />
       </main>
     </div>
     {compare && plan && <CompareModal plan={plan} onClose={() => setCompare(false)} />}

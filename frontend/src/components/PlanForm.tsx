@@ -160,7 +160,7 @@ export function PlanForm({
       >
         {busy ? (
           <>
-            {wake.status === "waking" ? "Waiting for server…" : phase === "routes" ? "Finding routes…" : "Checking weather…"}
+            {wake.status === "waking" ? "Waiting for the server\u2026" : "Planning your trip\u2026"}
           </>
         ) : (
           <>

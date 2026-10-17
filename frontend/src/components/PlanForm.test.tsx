@@ -64,7 +64,7 @@ describe("planning while the server wakes", () => {
     vi.unstubAllGlobals();
   });
 
-  it("shows Waiting for server and automatically submits once health responds", async () => {
+  it("shows Waiting for the server and automatically submits once health responds", async () => {
     const { PlanForm, planner, serverWake } = modules;
     const complete = vi.fn();
     render(<PlanForm initial={null} onComplete={complete} onClose={vi.fn()} />);
@@ -73,7 +73,7 @@ describe("planning while the server wakes", () => {
     expect(screen.getByRole("radio", { name: "Sustained" })).toHaveAttribute("aria-checked", "false");
     expect(screen.getByRole("radiogroup", { name: "Wind used for risk" })).toHaveAccessibleDescription(/25 \/ 35 \/ 45 \/ 55 mph/);
     fireEvent.click(screen.getByRole("button", { name: "Plan routes" }));
-    expect(screen.getByRole("button", { name: "Waiting for server…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Waiting for the server…" })).toBeDisabled();
     expect(network.createPlan).not.toHaveBeenCalled();
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     expect(planner.get().phase).toBe("routes");
@@ -89,7 +89,7 @@ describe("planning while the server wakes", () => {
     expect(network.createPlan).toHaveBeenCalledOnce();
     expect(network.createPlan).toHaveBeenCalledWith(expect.objectContaining({ cargo_lb: 42000 }), expect.any(AbortSignal));
     expect(complete).toHaveBeenCalledOnce();
-    expect(screen.queryByRole("button", { name: "Waiting for server…" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Waiting for the server…" })).not.toBeInTheDocument();
     expect(planner.get().plan?.routes).toHaveLength(3);
   });
 
@@ -98,7 +98,7 @@ describe("planning while the server wakes", () => {
     const complete = vi.fn();
     render(<PlanForm initial={null} onComplete={complete} onClose={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Plan routes" }));
-    expect(screen.getByRole("button", { name: "Waiting for server…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Waiting for the server…" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Cancel request" }));
     expect(screen.getByRole("button", { name: "Plan routes" })).toBeEnabled();
     expect(healthSignal.aborted).toBe(false);

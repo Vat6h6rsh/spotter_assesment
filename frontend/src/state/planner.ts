@@ -11,6 +11,8 @@ interface PlannerState {
   plan: Plan | null;
   heatmap: PreparedHeatmap | null;
   phase: Phase;
+  submitted: PlanRequest | null;
+  startedAt: number | null;
   selectedRoute: string | null;
   checkpoint: number | null;
   selectionSource: SelectionSource | null;
@@ -42,6 +44,8 @@ let state: PlannerState = {
   plan: cached?.plan ?? null,
   heatmap: initialHeatmap,
   phase: "idle",
+  submitted: null,
+  startedAt: null,
   selectedRoute:
     cached?.plan.recommendation.route_id ?? cached?.plan.routes[0].id ?? null,
   checkpoint: null,
@@ -145,17 +149,12 @@ export const planner = {
     requestController = controller;
     lastInputs = inputs;
     timeline.play(false);
-    update({ phase: "routes", error: null, heatmapError: null });
-    let stageTimer: ReturnType<typeof setTimeout> | undefined;
+    update({ phase: "routes", error: null, heatmapError: null, submitted: inputs, startedAt: Date.now() });
     try {
-      if (serverWake.get().status === "waking") await serverWake.wait(controller.signal);
+      if (["waking", "unavailable"].includes(serverWake.get().status)) await serverWake.wait(controller.signal);
       controller.signal.throwIfAborted();
-      stageTimer = setTimeout(() => {
-        if (!controller.signal.aborted) update({ phase: "weather" });
-      }, 900);
       const result = await createPlan(inputs, controller.signal);
       controller.signal.throwIfAborted();
-      clearTimeout(stageTimer);
       const plan = result.data;
       timeline.reset();
       update({
@@ -187,8 +186,6 @@ export const planner = {
           error instanceof Error ? error.message : "Unable to plan this trip.",
       });
       return false;
-    } finally {
-      clearTimeout(stageTimer);
     }
   },
   retry() {

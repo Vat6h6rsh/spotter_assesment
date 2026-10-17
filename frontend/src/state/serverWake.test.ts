@@ -32,7 +32,7 @@ describe("background server wake", () => {
     request.respond();
     await serverWake.wait(new AbortController().signal);
     await vi.advanceTimersByTimeAsync(1600);
-    expect(serverWake.get()).toEqual({ status: "ready", slow: false });
+    expect(serverWake.get()).toMatchObject({ status: "ready", slow: false });
     stop();
   });
 
@@ -46,11 +46,11 @@ describe("background server wake", () => {
     expect(serverWake.get().slow).toBe(false);
     expect(continuePlan).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(1);
-    expect(serverWake.get()).toEqual({ status: "waking", slow: true });
+    expect(serverWake.get()).toMatchObject({ status: "waking", slow: true });
     request.respond();
     await waiting;
     expect(continuePlan).toHaveBeenCalledOnce();
-    expect(serverWake.get()).toEqual({ status: "ready", slow: false });
+    expect(serverWake.get()).toMatchObject({ status: "ready", slow: false });
     stop();
   });
 
@@ -67,7 +67,7 @@ describe("background server wake", () => {
     secondCleanup();
     await vi.advanceTimersByTimeAsync(0);
     expect(signal?.aborted).toBe(true);
-    expect(serverWake.get()).toEqual({ status: "idle", slow: false });
+    expect(serverWake.get()).toMatchObject({ status: "idle", slow: false });
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -86,14 +86,55 @@ describe("background server wake", () => {
     stop();
   });
 
-  it("bounds a stalled wake and releases the plan to normal request handling", async () => {
+  it("retries 503 and network failures every three seconds until OK", async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce({ ok: false }).mockRejectedValueOnce(new TypeError("Network")) .mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetcher);
+    const { serverWake } = await import("./serverWake");
+    const stop = serverWake.start();
+    await vi.advanceTimersByTimeAsync(5999);
+    expect(serverWake.get().status).toBe("waking");
+    await vi.advanceTimersByTimeAsync(1);
+    expect(serverWake.get().status).toBe("ready");
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher).toHaveBeenLastCalledWith(expect.any(String), expect.objectContaining({ cache: "no-store" }));
+    stop();
+  });
+
+  it("only becomes unavailable at the overall deadline, then releases the queued plan to report its own error", async () => {
     pendingFetch();
     const { serverWake, WAKE_TIMEOUT_MS } = await import("./serverWake");
     const stop = serverWake.start();
-    const waiting = serverWake.wait(new AbortController().signal);
-    await vi.advanceTimersByTimeAsync(WAKE_TIMEOUT_MS);
+    const proceed = vi.fn();
+    const waiting = serverWake.wait(new AbortController().signal).then(proceed);
+    await vi.advanceTimersByTimeAsync(WAKE_TIMEOUT_MS - 1);
+    expect(serverWake.get().status).toBe("waking");
+    expect(proceed).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(serverWake.get().status).toBe("unavailable");
     await waiting;
-    expect(serverWake.get()).toEqual({ status: "unavailable", slow: false });
+    expect(proceed).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+    stop();
+  });
+
+  it("treats a plan submitted after a failed wake as Try again", async () => {
+    const request = pendingFetch();
+    const { serverWake, WAKE_TIMEOUT_MS } = await import("./serverWake");
+    const stop = serverWake.start();
+    await vi.advanceTimersByTimeAsync(WAKE_TIMEOUT_MS);
+    expect(serverWake.get().status).toBe("unavailable");
+    const startedAt = serverWake.get().startedAt;
+    const proceed = vi.fn();
+    const waiting = serverWake.wait(new AbortController().signal).then(proceed);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(serverWake.get().status).toBe("waking");
+    expect(serverWake.get().startedAt).not.toBe(startedAt);
+    expect(proceed).not.toHaveBeenCalled();
+    request.respond();
+    await vi.advanceTimersByTimeAsync(3000);
+    await waiting;
+    expect(serverWake.get().status).toBe("ready");
+    expect(proceed).toHaveBeenCalledOnce();
     stop();
   });
 
@@ -103,7 +144,7 @@ describe("background server wake", () => {
     const { serverWake } = await import("./serverWake");
     const stop = serverWake.start();
     await serverWake.wait(new AbortController().signal);
-    expect(serverWake.get()).toEqual({ status: "ready", slow: false });
+    expect(serverWake.get()).toMatchObject({ status: "ready", slow: false });
     expect(request.fetcher).not.toHaveBeenCalled();
     stop();
   });
