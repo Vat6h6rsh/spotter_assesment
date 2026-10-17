@@ -16,7 +16,7 @@ const title = "See today's toughest trucking weather";
 function form() { return render(<PlanForm initial={null} onComplete={vi.fn()} onClose={vi.fn()} />); }
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-17T12:00:00Z"));
-  localStorage.clear(); mocks.wake.status = "ready";
+  localStorage.clear(); mocks.wake.status = "ready"; sessionStorage.clear();
   mocks.hotspot.mockReset().mockResolvedValue(makeMockHotspot()); mocks.submit.mockReset().mockResolvedValue(false);
 });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
@@ -45,7 +45,7 @@ describe("daily weather showcase", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Plan this route" }));
     expect(mocks.submit).toHaveBeenCalledWith(expect.objectContaining({ origin: trip.origin, destination: trip.destination }));
   });
-  it("waits for health, shows only once per local day, and can be reopened from the footer", async () => {
+  it("waits for health, shows only once per local day, and can be reopened from the form button", async () => {
     mocks.wake.status = "waking";
     const first = form(); expect(mocks.hotspot).not.toHaveBeenCalled();
     mocks.wake.status = "ready"; first.rerender(<PlanForm initial={null} onComplete={vi.fn()} onClose={vi.fn()} />);
@@ -111,6 +111,28 @@ describe("daily weather showcase", () => {
     await act(async () => resolve(makeMockHotspot()));
     expect(screen.queryByRole("dialog")).toBeNull(); expect(localStorage.getItem(SHOWCASE_DATE_KEY)).toBeNull();
     view.unmount(); expect(signal.aborted).toBe(true);
+  });
+  it("glows the form button, shows a 1.5 s tooltip, then hides it once per session", async () => {
+    localStorage.setItem(SHOWCASE_DATE_KEY, "2026-10-17");
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] }); vi.setSystemTime(new Date("2026-10-17T12:00:00Z"));
+    const first = form(); await act(async () => {});
+    const button = screen.getByRole("button", { name: "Today's toughest weather" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    act(() => vi.advanceTimersByTime(0)); expect(button).toHaveAttribute("data-hint", "glow");
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    act(() => vi.advanceTimersByTime(600)); expect(screen.getByRole("tooltip")).toHaveTextContent("today's worst US weather");
+    expect(button).toHaveAccessibleDescription(/today's worst US weather/);
+    act(() => vi.advanceTimersByTime(1499)); expect(screen.getByRole("tooltip")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1)); expect(screen.queryByRole("tooltip")).toBeNull(); expect(button).not.toHaveAttribute("data-hint");
+    first.unmount(); form(); await act(async () => {});
+    act(() => vi.advanceTimersByTime(2100));
+    expect(screen.getByRole("button", { name: "Today's toughest weather" })).not.toHaveAttribute("data-hint");
+  });
+  it("offers the button without auto-opening when editing a trip", async () => {
+    render(<WeatherShowcase demo={false} busy={false} autoOpen={false} onPlan={vi.fn()} onOwn={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Today's toughest weather" }));
+    expect(screen.getByRole("dialog", { name: title })).toBeVisible();
+    expect(localStorage.getItem(SHOWCASE_DATE_KEY)).toBeNull();
   });
   it("keeps planning usable if the showcase request fails", async () => {
     mocks.hotspot.mockRejectedValue(new Error("Endpoint unavailable")); form();

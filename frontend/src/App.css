@@ -245,7 +245,21 @@ input.forecast-slider { --position: 0%; appearance: none; min-height: 44px; heig
 .showcase-chip { padding: var(--sp-2); text-align: left; border: 1px solid var(--border); border-radius: var(--r-md); font-size: var(--fs-caption); }
 .showcase-chip[aria-pressed="true"] { border-color: var(--primary); background: var(--surface2); }
 .weather-showcase .showcase-source { margin: var(--sp-4) 0 0; }
-.showcase-link { justify-content: center; font-size: var(--fs-caption); }
+.showcase-trigger { position: relative; }
+.showcase-button { width: 100%; }
+.showcase-button[data-hint] { animation: showcase-glow 1050ms var(--ease-standard) 2; }
+@keyframes showcase-glow {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 50%, transparent); }
+  50% { box-shadow: 0 0 14px 3px color-mix(in srgb, var(--primary) 40%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.showcase-tip { position: absolute; bottom: calc(100% + 8px); left: 50%; z-index: 12; width: max-content; max-width: min(280px, 100%); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); background: var(--text); color: var(--surface); font-size: var(--fs-caption); line-height: 1.333333; text-align: center; box-shadow: var(--elev-2); pointer-events: none; transform: translateX(-50%); animation: showcase-tip 1500ms var(--ease-standard) both; }
+.showcase-tip::after { content: ""; position: absolute; top: 100%; left: 50%; border: 6px solid transparent; border-top-color: var(--text); transform: translateX(-50%); }
+@keyframes showcase-tip { 0% { opacity: 0; transform: translate(-50%, 4px); } 15%, 80% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .showcase-button[data-hint] { animation: none; box-shadow: 0 0 0 2px var(--primary); }
+  .showcase-tip { animation: none; }
+}
 .weather-icon { display: inline-flex; vertical-align: middle; flex-shrink: 0; }
 .weather-icon img { display: block; width: 100%; height: 100%; }
 .modal-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-4); }

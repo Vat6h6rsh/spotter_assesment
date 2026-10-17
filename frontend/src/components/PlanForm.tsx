@@ -141,6 +141,10 @@ export function PlanForm({
           prefix="trip"
         />
       </details>
+      <WeatherShowcase demo={demo} busy={busy} autoOpen={!initial} onOwn={() => form.current?.querySelector<HTMLInputElement>('[role="combobox"]')?.focus()} onPlan={trip => {
+        setOrigin(trip.origin); setDestination(trip.destination); setCargo(trip.cargo_lb); setDeparture(trip.departure_local); setValidation("");
+        void planner.submit({ origin: trip.origin, destination: trip.destination, cargo_lb: trip.cargo_lb, departure_local: trip.departure_local, spacing_mi: options.spacing, wind_measure: options.wind, rest: options.rest, weather_slowdown: options.weatherSlowdown }).then(success => { if (success) onComplete(); });
+      }} />
       {validation && (
         <p className="inline-error" role="alert">
           {validation}
@@ -177,10 +181,6 @@ export function PlanForm({
         <Icon name="globe" size={14} /> US & Canada · built for planning before
         you drive
       </p>
-      {!initial && <WeatherShowcase demo={demo} busy={busy} onOwn={() => form.current?.querySelector<HTMLInputElement>('[role="combobox"]')?.focus()} onPlan={trip => {
-        setOrigin(trip.origin); setDestination(trip.destination); setCargo(trip.cargo_lb); setDeparture(trip.departure_local); setValidation("");
-        void planner.submit({ origin: trip.origin, destination: trip.destination, cargo_lb: trip.cargo_lb, departure_local: trip.departure_local, spacing_mi: options.spacing, wind_measure: options.wind, rest: options.rest, weather_slowdown: options.weatherSlowdown }).then(success => { if (success) onComplete(); });
-      }} />}
       </div>
     </form>
   );

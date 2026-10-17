@@ -42,7 +42,7 @@ export interface Preferences {
   drivePreview: boolean;
 }
 export const defaultPreferences: Preferences = {
-  theme: "system",
+  theme: "01",
   spacing: 25,
   wind: "gust",
   rest: { mode: "auto" },
@@ -61,7 +61,7 @@ export function readPreferences(
     const theme =
       value.theme === "system" || themes.some((t) => t.id === value.theme)
         ? value.theme
-        : "system";
+        : defaultPreferences.theme;
     const spacing = [10, 25, 50].includes(value.spacing) ? value.spacing : 25;
     const wind = value.wind === "sustained" ? "sustained" : "gust";
     let rest: RestPlan = { mode: "auto" };

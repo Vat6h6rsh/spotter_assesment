@@ -31,8 +31,8 @@ describe("theme and defaults persistence", () => {
     stop();
     window.matchMedia = original;
   });
-  it("defaults to System and maps dark/light system preferences", () => {
-    expect(readPreferences({ getItem: () => null }).theme).toBe("system");
+  it("defaults to Brand daylight and maps dark/light system preferences", () => {
+    expect(readPreferences({ getItem: () => null }).theme).toBe("01");
     expect(resolveTheme("system", true)).toBe("04");
     expect(resolveTheme("system", false)).toBe("02");
     expect(resolveTheme("05", false)).toBe("05");
