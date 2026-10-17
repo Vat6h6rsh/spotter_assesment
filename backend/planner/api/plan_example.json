@@ -1,0 +1,758 @@
+{
+  "plan_id": "p_bb7aaecd00bb4d19be184bf08411ffb1",
+  "created_at": "2026-10-15T14:39:58Z",
+  "inputs": {
+    "origin": {
+      "label": "Joliet, IL, USA",
+      "lat": 41.525,
+      "lon": -88.081
+    },
+    "destination": {
+      "label": "Denver, CO, USA",
+      "lat": 39.739,
+      "lon": -104.99
+    },
+    "departure_local": "2026-10-15T10:39",
+    "cargo_lb": 42000.0,
+    "spacing_mi": 25,
+    "wind_measure": "gust",
+    "rest": {
+      "mode": "auto"
+    },
+    "departure_utc": "2026-10-15T15:39:00Z",
+    "origin_tz": "America/Chicago",
+    "weather_slowdown": false
+  },
+  "providers": {
+    "routing": {
+      "name": "osrm",
+      "truck_aware": false
+    },
+    "weather": {
+      "name": "open-meteo",
+      "fetched_at": "2026-10-15T14:39:58Z"
+    }
+  },
+  "warnings": [
+    {
+      "code": "CAR_ROUTING",
+      "message": "car routing: truck restrictions not applied"
+    },
+    {
+      "code": "FEWER_ROUTES",
+      "message": "Only 2 distinct routes were found."
+    }
+  ],
+  "recommendation": {
+    "status": "recommended",
+    "route_id": "A",
+    "reasons": [
+      "100 Severe mi vs 125 on B",
+      "Fastest elapsed time"
+    ],
+    "tradeoff": "Also the fastest route (A).",
+    "departure_advice": {
+      "offset_h": 24,
+      "route_id": "B",
+      "summary": "Leave 24 h later: 0 Severe mi on B"
+    }
+  },
+  "routes": [
+    {
+      "id": "A",
+      "label": "I-80 Express / I-80",
+      "rank": 1,
+      "eligible": true,
+      "is_fastest": true,
+      "polyline": "gjm|FhirxOt@qf@n`AsHtGfLxIvnAoJp|@bPlbGf\\hfA~xAdnBfSph@zEfe@bElqFzGxb@nLdUzcBxbBnOv^vJxmHtMv}@lUnh@dbDbuEviHfrOnPxq@jT`bo@OtnMsJnhDl@pzAdFhrExHhf@d]h`AhEfs@bCrse@sU|_BmDzzBdFxa@jZ~m@lGl_@rEz`Osu@`{HyuAvrDw{@vsCsTzdB?rtPtSzcCcS|qBiAz_AnYrnFln@bnCjJhmA}CdcBei@rkBm@ngC~CvjIxTffDlRviAXnwClHnqA}Kn_CrHp~L_R`tD{}Ah`LccArlDoGvf@xBdfB`Ohf@x_@zm@fM~g@lDjjC{r@bsFaPviQgKdb@k|B`yE}Nvu@|AprYeDdrFsTp{@c_BhcB_Shw@fCre@dj@n`CjObvEoG`kD{VlfBxIduG`Ixe@`p@|oAr@zyBolA|}Dq}@`aA{yBd}CmtA~rCiOvOew@`SolAoAmmBtXolCdDamB_QkeAi@q[f@mNrKcG|Ye@p|Fk~AbkMetAfeGIliKwG`lDxDfeQcq@tkEiQdvCqL~nOg`AbgEue@`hGyCrtUcXjkChFjpBaFrmFwpBvjIoGh}G`KnbBc@~mByq@jfFH~vJ_Hr{IrBtaCtk@v|FwA|v]hEb`Cu@jrPet@vzQ{AhfFP`pq@nHpfKqKx~IpHtz[eFp|BnEjzBXhmTthAbaFxSvqH{VrfTBvoCvPdlCeCd{Ce[d|GonAdqEgEps@zlBhnPpJraSn`AtrIvo@f~Cv@poDzu@ftJy@`h@nOd~@nFb}HwSp|MhJt|I~Lj]hWjOngHj@lL|CtO|]fGzjDj~Cp}HpVzsC~dBjfNzj@|eKdlBdkGnUluCP~{Q~IrWf{Bj}CjJr`@`EreY{QdoAsCpfd@XbiB`UliCB~bMuVv`BZnbgAkHdzFnGb`BkIfaCrG~nLu@zlJoFxuCjEvwUaGvnPoGliDvMpkDyBpnEbRl[lqBpYzkEtcBh|@nvB|vBlcCh`C``CrrArWnkEnoEvQrc@~VjuB~tA~gBrzAr}AtmAdbArjDxmB`w@xdAnmB~zAjZnr@dx@`f@lGb]s@`cM`Mz_DfUraAj@|o@aH|l@d]laD}FbtJrHvo@FxhB}JlaBdCpVdR~Qvk@q@lzBtf@ryAd~B|vAbeBfnAryBh_BzxAtQ|_@v{A|{F~rAzlB`yBlsFt_@vl@dsCzrB`a@vAjaBc^|V`CbcAd{@fbApi@jWvZ|pB~dIjyAhxBd|AhqCdaDh}DtoC~|Hpn@pfGxr@`iDqUl`BvCjcP|Ej]nbAvhBvmAtuApiAd}BfvCtvCdkBlkAbPvd@m@~kBka@|_I@zmCjIr~B{HhjLdD~xPoEvfDcBbud@hGxe]qCzxaAzFlf`@gHzfDQbxg@zEbdYaAvzCcZpjDzf@fpGeVbzA_Axa@vsD`bSznC~~H~tAzvGdbBreDd`BdfGf\\l_EiFviHrDznAbcAhgId`BdbIx_@`nHg@~eCxh@drCp[x}D`r@|aC`Fhf@jBd_LyE~xBf@hhGuNzgEz@vtFy_@|mIyl@~sGy`@btCPhmHs\\zxHzIjsEi@dzEtQ|wHgl@nsFmOzjDil@~kF}a@naB_nC~yFewAlaJkbCfbIavFpcM}oDzxMseDlfJynBznH{XfmBcsDzcMudAfkBedFtmP_s@pjAkgAhbAmUxf@s^vvCu[l`EkeC`aJ_gBnqIoeApcDqOb`A_VrdDaPd}@wkBdjHg~@ztByL|mCwj@xsBmPnjAmjBzpS`@~bGct@zlLysAblKyc@xaYnLzeJUdtKnYnsBzpAvjDpU`zAlW`pLld@dsIqGdrI~^f}DaDviAmnAf~JaDdyHgMrfDbAlxJd]vbCj@rnCtHrnAfrAvxFfi@viHrtAlhJ`NxjFnxAj_LbC`mDbGffAfoBr_Kjg@vkGzXnfBxLxYzf@~a@jkA~yBbcDn|D~eApwDneBlcCj~BtgGbfAdeGoCbsF|@vuIxDbh@xqDz{PvqN`{w@dxJja[lvPtq]xjAbaBn~A`~@`j@zbA`q@zi@djAtb@vuMjvH~`WrlU`m@tq@jp@rfA|~V~kh@fYrtA|H|`AjGneXr]rjDgCfpGoJhkAUbjH|Qf`A`~AtnCrUpqA|E`qEso@zrNp]txFp_A`sCpM`t@rEbdNtuJf|`@vEjhEvOpkA`Kf|HjF~k@tU`j@r`GzlIv{@jnDw@hpFni@~iDljBpbDviA`fCdbAbd@feJtwI~f@rn@fsAbaCdnC~uC~`@fx@`oArrAty@|m@p~BjuCld@vu@vdDnqHlKvf@`EjcA~G`RnUr\\xtEhgEntAzhBfJn^bShgC`^rfAtfAeGxhBdd@veBtD~QpNpRpj@r`@t_@x`@dx@lNcb@nVeZhcAkg@Dym@",
+      "bbox": [
+        -105.01408,
+        39.73844,
+        -88.07314,
+        41.69996
+      ],
+      "distance_mi": 979.2962207168416,
+      "drive_s": 62060.200000000164,
+      "rest_s": 37800,
+      "total_s": 99860.20000000016,
+      "arrival_utc": "2026-10-16T19:23:20Z",
+      "arrival_tz": "America/Denver",
+      "rests": [
+        {
+          "at_mi": 439.51091257196924,
+          "start_utc": "2026-10-15T23:39:00Z",
+          "duration_s": 1800,
+          "kind": "break30",
+          "lat": 41.231991,
+          "lon": -95.90918
+        },
+        {
+          "at_mi": 612.2044787132457,
+          "start_utc": "2026-10-16T03:09:00Z",
+          "duration_s": 36000,
+          "kind": "rest10h",
+          "lat": 40.69157,
+          "lon": -98.90651
+        }
+      ],
+      "progress": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          1786.0156626826563,
+          25.0
+        ],
+        [
+          3397.8772382545326,
+          50.0
+        ],
+        [
+          5009.785092652336,
+          75.0
+        ],
+        [
+          6623.758819625986,
+          100.0
+        ],
+        [
+          8234.915866177167,
+          125.0
+        ],
+        [
+          9887.814487370399,
+          150.0
+        ],
+        [
+          11534.704325312432,
+          175.0
+        ],
+        [
+          13185.234297883682,
+          200.0
+        ],
+        [
+          14810.174487416594,
+          225.0
+        ],
+        [
+          16422.222180741497,
+          250.0
+        ],
+        [
+          18034.171719798884,
+          275.0
+        ],
+        [
+          19665.642942294824,
+          300.0
+        ],
+        [
+          21390.61788177417,
+          325.0
+        ],
+        [
+          23002.526894134124,
+          350.0
+        ],
+        [
+          24613.823874293248,
+          375.0
+        ],
+        [
+          26226.123152474298,
+          400.0
+        ],
+        [
+          27835.929837072446,
+          425.00000000000006
+        ],
+        [
+          28800.0,
+          439.51091257196924
+        ],
+        [
+          30600.0,
+          439.51091257196924
+        ],
+        [
+          31328.137085954866,
+          450.0
+        ],
+        [
+          32884.73525191187,
+          475.0
+        ],
+        [
+          34504.170703347205,
+          500.0
+        ],
+        [
+          36154.892300198,
+          525.0
+        ],
+        [
+          37658.69972648872,
+          550.0
+        ],
+        [
+          39162.7273823081,
+          575.0
+        ],
+        [
+          40665.48743290095,
+          600.0
+        ],
+        [
+          41400.0,
+          612.2044787132457
+        ],
+        [
+          77400.0,
+          612.2044787132457
+        ],
+        [
+          78169.93514272614,
+          625.0
+        ],
+        [
+          79674.03685317721,
+          650.0
+        ],
+        [
+          81176.5956923094,
+          675.0
+        ],
+        [
+          82678.69800263662,
+          700.0
+        ],
+        [
+          84181.88914345883,
+          725.0000000000001
+        ],
+        [
+          85685.69556072744,
+          750.0
+        ],
+        [
+          87189.31364029492,
+          775.0
+        ],
+        [
+          88692.9270269579,
+          800.0
+        ],
+        [
+          90196.43274021902,
+          825.0
+        ],
+        [
+          91699.03813804919,
+          850.0000000000001
+        ],
+        [
+          93199.15916648417,
+          875.0
+        ],
+        [
+          94701.89993232753,
+          900.0
+        ],
+        [
+          96205.5159300175,
+          924.9999999999999
+        ],
+        [
+          97707.56185917126,
+          950.0
+        ],
+        [
+          99394.57499109473,
+          975.0
+        ],
+        [
+          99860.20000000016,
+          979.2962207168416
+        ]
+      ],
+      "checkpoints": [
+        {
+          "i": 0,
+          "mi": 0.0,
+          "lat": 41.525,
+          "lon": -88.08101,
+          "elapsed_s": 0.0,
+          "tz": "America/Chicago",
+          "level": 0,
+          "base_wind_level": 0,
+          "load_adjusted": false,
+          "drivers": [],
+          "rule": "All conditions Low",
+          "eta_utc": "2026-10-15T15:39:00Z",
+          "wind_mph": 8.3,
+          "gust_mph": 17.2,
+          "rain_in": 0.0,
+          "snow_in": 0.0,
+          "forecast_hour_utc": "2026-10-15T16:00:00Z",
+          "beyond_horizon": false,
+          "speed_factor": 1.0,
+          "slowdown": null,
+          "place": {
+            "road": null,
+            "town": "Joliet",
+            "state": "IL",
+            "distance_mi": 0.1,
+            "direction": "E"
+          },
+          "place_label": "in Joliet, IL",
+          "clears_in_h": null,
+          "clears_at_utc": null
+        },
+        {
+          "i": 1,
+          "mi": 25.0,
+          "lat": 41.378328,
+          "lon": -88.469223,
+          "elapsed_s": 1786.0156626826563,
+          "tz": "America/Chicago",
+          "level": 0,
+          "base_wind_level": 0,
+          "load_adjusted": false,
+          "drivers": [],
+          "rule": "All conditions Low",
+          "eta_utc": "2026-10-15T16:08:46Z",
+          "wind_mph": 8.9,
+          "gust_mph": 19.2,
+          "rain_in": 0.016,
+          "snow_in": 0.0,
+          "forecast_hour_utc": "2026-10-15T16:00:00Z",
+          "beyond_horizon": false,
+          "speed_factor": 1.0,
+          "slowdown": null,
+          "place": {
+            "road": "I-80",
+            "town": "Shorewood",
+            "state": "IL",
+            "distance_mi": 17.0,
+            "direction": "SW"
+          },
+          "place_label": "I-80 · 17 mi SW of Shorewood, IL",
+          "clears_in_h": null,
+          "clears_at_utc": null
+        },
+        {
+          "i": 2,
+          "mi": 50.0,
+          "lat": 41.368191,
+          "lon": -88.94878,
+          "elapsed_s": 3397.8772382545326,
+          "tz": "America/Chicago",
+          "level": 0,
+          "base_wind_level": 0,
+          "load_adjusted": false,
+          "drivers": [],
+          "rule": "All conditions Low",
+          "eta_utc": "2026-10-15T16:35:37Z",
+          "wind_mph": 8.6,
+          "gust_mph": 16.6,
+          "rain_in": 0.0,
+          "snow_in": 0.0,
+          "forecast_hour_utc": "2026-10-15T17:00:00Z",
+          "beyond_horizon": false,
+          "speed_factor": 1.0,
+          "slowdown": null,
+          "place": {
+            "road": "I-80",
+            "town": "Ottawa",
+            "state": "IL",
+            "distance_mi": 5.7,
+            "direction": "W"
+          },
+          "place_label": "I-80 · 6 mi W of Ottawa, IL",
+          "clears_in_h": null,
+          "clears_at_utc": null
+        }
+      ],
+      "risk": {
+        "miles_by_level": {
+          "low": 454.2962207168416,
+          "moderate": 425.0,
+          "high": 0.0,
+          "severe": 100.0,
+          "no_travel": 0.0,
+          "unknown": 0.0
+        },
+        "avg_risk": 0.7403275787884716,
+        "coverage": 1.0,
+        "max_level": 3
+      },
+      "weather_delay_s": 0.0
+    },
+    {
+      "id": "B",
+      "label": "I-70 / US-40",
+      "rank": 2,
+      "eligible": true,
+      "is_fastest": false,
+      "polyline": "gjm|FhirxOt@qf@n`AsHtGfLxIvnAoJp|@zNl|Fn]hlA~xAdnBhOd]xIrp@fAhgB}ErKaBiIbGgDnrM_WjfQkNvn@|`@r~@f~Blm@l}@rt@~q@hfAdk@tzB`d@`{@dh@tvHffKx\\hThdAhSh[vTzxHjiKdTlr@tj@txFbTzh@``@bUjiDlYha@jPjcC`aDnmC~fCtRfe@|\\tnBlOfYjWpO|oDtw@fsEfeEpfG`jPbZ`a@rb@xLheGsAt\\lEtoAxt@ft@|VxoAry@vdEnbAvpB~dAza@jYtsAzfBpxDpFz}I~wEvN|ZzT|_ChMd`@vlBf~@xcBdb@~VpQfdDfmF|gA|kEvkAzuAz}@f\\d`BjuCpSxaAyG`{@s@r~JrO~l@t[dOvwBpHreEq@hoAzOl{B_u@fn@hInmCrsC`sBdkA~h@blBvxAvdBzjClhBpxArcD~xAveBjbB||@`{@r|B|jChcDnVxNv{@jJf{@h{@~OrWxTbxApPf_@l}GhlI~uAlz@nJv\\pAtgAzR|uBpBbmKlUxk@zX|HbnLeIfa@lHjvBhcB|o@z`A`nA~h@jrDbxCtUd_@vYbjAfOvUzzAf]j]xRbwDtuD|oAhlCbzAzPfeDlrCjWfv@~VfUxz@iFzjChPpeIsXfeBlCnbIfoAbUnRbl@huA|S`jB|AfwBxIr}@cFrn@_@`fD{|@lmEr@voJzE~j@hq@zsBtFrk@vGfhZbQpgBPdxNqHfgDhDhnIvGve@`OrZtxGf`HjKpn@~@~~Dbb@`yCuB|ep@wWj_GKtaD{d@vgCmBfmBnHpy@zn@|cC|Grk@h@rvArPd}BL|bDjW~iCdAfnE|WzfGaWz}EmdApoCuIzi@ef@`_Ko@zvHe`Bh~Iyn@|uAvTvmEgKjZyp@xl@eZtj@i|@fh@}Rdm@`Gju@|`CvuFt@z_@qYbvEmLza@}x@fkAqjB~lHe^pYaEbU~KhXbtAjYdStRxwBfbJjUraCbH|_LzHzV~eBbcChM|e@m@zn@cW~n@_BvX|\\bnB?xsIpc@rkA~Ej_@OnkIjMpa@ddAbiAzk@hyAdJtdFeGlmC~Fb_@`\\~p@rCx]qDvaJeb@fzE}l@jdAwGr`@_Az~Crh@dtBH~oBmT`zAmVvh@eChkA{uA|qJkv@jtAsCjkDabGfxa@_LnYys@ro@cLlf@bL|gBfBbcDiChqLyAnjBsY`tH_AneDzx@|lE}M|~@wEn}Bs|@x_DwBzt@kBxiClOluClUtr@lBb[o]fxDyLhqL_ZpkCfAdoHjb@nzB^l_KeR~{YaLjqE{c@bpB_NlyB{k@xvC}Blb@tIhyEtNv`aAfDr}GvLhqA^roAcFhu@zC`yB~Jle@d{Af_CfZf[hoAps@tLhT`DrYqU`pAb`@ppW_Cn~]xLtpPuIjt@khAbiCuLxs@m]|h_@nSmFjqCxCnlRd{CbzIlbBh`Id`CpuMhfH`|^xiPxTfVd{A~}C`hAbS`mFdcDvg@ncAbc@xjBjnBz~Att@~qAhI~^zIhoBkf@`u@{I`tByYpl@oXjhA_LnoAn`@x^pdApHdjAxb@dFvQdFjwAbgAt~@xJvbA|i@|r@paB~Mde@pXnd@pDhY{HrIjHcBfsBvDriAaFzeE`HtmFuJvfErFz{Dfl@|oDlX~jCrZz{AxD~r@`ZncAdJfoBptApzK`K~rBzSl}@dk@||AjWtsAdv@|iCj}Bj|ExRfo@zw@puAt]|`B~x@|sBnTpeBFr`DlWr`Eeo@xcEmAbgE~In}AsElrBkO`xAa@d|FmI|zBgcB~cKcDltEwdAbbGaKtnBxCds@eDxy@tEdaAzf@heBj_AbgAf{A~~Bli@tpAnCfeBm\\`N{IrpAqoA`bDeMp_AuK~X}SxOk_C`p@ej@v}@mn@nk@fFtfDrK`o@^pt@aHfkAy[`lAmHrv@eCbrq@}Lr`AtNbuAV`zDsCzh@}b@f_BoEfg@zAfal@xEn_Cm^tdFvDfgAr_@r_DfAflDuT~bFvBtzDmKzkCjNdrIfd@`sI`Wzl@x~AvtAf\\tf@lb@r|Ar^|sCxlAvaB~lAj`D{E~nKfbA~lN|AtkFpbAt{CxuEvoP`D|uHfa@pgDtGjbEjj@xcC~F`yTrNjm@v_BttCbO|n@nEzoQh^~oDnrC`|H~Htd@pM`hG{Vv_D[vqZ_FrnKrFpsAg@bpV|T|eBv@n|B`f@`tBfCjlCvr@l}AfOxgAjCrfC|i@dkBdF~uJuG`wHfCtej@eEflBma@dlDgKpwDZrin@yj@d}EhEjuZaD`xLxGvbDiaBdbHg@vcE_KzfFjJpsEu@`fGkuCxxIqnBb}HiEnm@{AbpFcjD|qR{Ev~LmoDfoQqNbaFcfB|uL}bA`iKewAvoLgGvlm@}Mzj@clLlp[cKzf@[vaPgxA|gNqFxtz@eTrf@ysE`_EihDj`C_dCdqCueDrpB__OvgL_Xza@gr@zxBcxFveFoTx_@aLnp@cH~at@|Kjo@deEn}KfKpu@hBvo|@nKfxBwG~uB{@f`Il@xgLdF~cBwGbpBzDnr@{FttWhCxjDnuBrw`@nN~m@~eAxiB~Lrz@r@|h_@~E`cBmJrrCj@pb]vEr{B_Fzo_@vEtuJbaCz_V_jA|oIyPvuDHncJtaAtabApLtbCz_@ddCbZ~rDsPfuMjUxvAfRdaCq_AvtBkIn_@e@vtH}q@hdFmd@xmBsqBh_Eee@fa@}sDdxBac@nn@q`AbzBi^`_@wfBdx@imBx_@{}Ap{@eiC`aCmfGlqCypCnjCqiEnpCe~Jn`GypBbg@_xBlqAgtE`{EulCzrFsdAfzEyj@foEs|@dcD_yAviJl@tgAiYz{CsEpxBvJr`Go`@n`FuKvth@rLpqAuMncCXzcLiHto@meApwBmhBlvHos@txP[|bDoI~~@kAbwAnD`bEyDtpAf~@vJnXjq@r`@t_@x`@dx@lNcb@nVeZhcAkg@Dym@",
+      "bbox": [
+        -105.01408,
+        38.84812,
+        -88.07314,
+        41.5251
+      ],
+      "distance_mi": 1077.7681727141783,
+      "drive_s": 68805.19999999974,
+      "rest_s": 39600,
+      "total_s": 108405.19999999974,
+      "arrival_utc": "2026-10-16T21:45:45Z",
+      "arrival_tz": "America/Denver",
+      "rests": [
+        {
+          "at_mi": 429.61139396489875,
+          "start_utc": "2026-10-15T23:39:00Z",
+          "duration_s": 1800,
+          "kind": "break30",
+          "lat": 39.649039,
+          "lon": -94.240587
+        },
+        {
+          "at_mi": 599.3843215452407,
+          "start_utc": "2026-10-16T03:09:00Z",
+          "duration_s": 36000,
+          "kind": "rest10h",
+          "lat": 39.028975,
+          "lon": -96.789729
+        },
+        {
+          "at_mi": 1074.2096716425933,
+          "start_utc": "2026-10-16T21:09:00Z",
+          "duration_s": 1800,
+          "kind": "break30",
+          "lat": 39.770588,
+          "lon": -104.991567
+        }
+      ],
+      "progress": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          1852.9697355764351,
+          25.0
+        ],
+        [
+          3460.8249699966286,
+          50.0
+        ],
+        [
+          5067.552818871745,
+          75.0
+        ],
+        [
+          6675.1358524517655,
+          100.0
+        ],
+        [
+          8282.113037876094,
+          125.0
+        ],
+        [
+          9889.949640764464,
+          150.0
+        ],
+        [
+          11541.789981861995,
+          175.0
+        ],
+        [
+          13152.043023616943,
+          200.0
+        ],
+        [
+          14763.830487162584,
+          225.0
+        ],
+        [
+          16374.42663899314,
+          250.0
+        ],
+        [
+          18070.196466023488,
+          275.0
+        ],
+        [
+          19805.030240821874,
+          300.0
+        ],
+        [
+          21539.719730917837,
+          325.0
+        ],
+        [
+          23275.036117159696,
+          350.0
+        ],
+        [
+          25009.084420235522,
+          375.0
+        ],
+        [
+          26744.133410692008,
+          400.0
+        ],
+        [
+          28504.120449335842,
+          425.00000000000006
+        ],
+        [
+          28800.0,
+          429.61139396489875
+        ],
+        [
+          30600.0,
+          429.61139396489875
+        ],
+        [
+          31909.601981216983,
+          450.0
+        ],
+        [
+          33673.305147848994,
+          475.0
+        ],
+        [
+          35271.285108601835,
+          500.0
+        ],
+        [
+          36773.68156614086,
+          525.0
+        ],
+        [
+          38430.24721049424,
+          550.0
+        ],
+        [
+          39933.614631291246,
+          575.0
+        ],
+        [
+          41400.0,
+          599.3843215452407
+        ],
+        [
+          77400.0,
+          599.3843215452407
+        ],
+        [
+          77437.04258876733,
+          600.0
+        ],
+        [
+          78940.19445958444,
+          625.0
+        ],
+        [
+          80443.17987256518,
+          650.0
+        ],
+        [
+          81946.62705372742,
+          675.0
+        ],
+        [
+          83450.66402861144,
+          700.0
+        ],
+        [
+          84954.12285489716,
+          725.0000000000001
+        ],
+        [
+          86457.56851420205,
+          750.0
+        ],
+        [
+          87960.63214071913,
+          775.0
+        ],
+        [
+          89464.05252801503,
+          800.0
+        ],
+        [
+          90966.92754654508,
+          825.0
+        ],
+        [
+          92468.29148212104,
+          850.0000000000001
+        ],
+        [
+          93971.27118762658,
+          875.0
+        ],
+        [
+          95475.34431439107,
+          900.0
+        ],
+        [
+          96979.41278164598,
+          924.9999999999999
+        ],
+        [
+          98483.89089721562,
+          950.0
+        ],
+        [
+          99988.1630765271,
+          975.0
+        ],
+        [
+          101491.25111362114,
+          1000.0
+        ],
+        [
+          102989.90070998567,
+          1025.0
+        ],
+        [
+          104493.6843868776,
+          1050.0
+        ],
+        [
+          106200.0,
+          1074.2096716425933
+        ],
+        [
+          108000.0,
+          1074.2096716425933
+        ],
+        [
+          108064.72852174142,
+          1075.0
+        ],
+        [
+          108405.19999999974,
+          1077.7681727141783
+        ]
+      ],
+      "checkpoints": [
+        {
+          "i": 0,
+          "mi": 0.0,
+          "lat": 41.525,
+          "lon": -88.08101,
+          "elapsed_s": 0.0,
+          "tz": "America/Chicago",
+          "level": 0,
+          "base_wind_level": 0,
+          "load_adjusted": false,
+          "drivers": [],
+          "rule": "All conditions Low",
+          "eta_utc": "2026-10-15T15:39:00Z",
+          "wind_mph": 8.3,
+          "gust_mph": 17.2,
+          "rain_in": 0.0,
+          "snow_in": 0.0,
+          "forecast_hour_utc": "2026-10-15T16:00:00Z",
+          "beyond_horizon": false,
+          "speed_factor": 1.0,
+          "slowdown": null,
+          "place": {
+            "road": null,
+            "town": "Joliet",
+            "state": "IL",
+            "distance_mi": 0.1,
+            "direction": "E"
+          },
+          "place_label": "in Joliet, IL",
+          "clears_in_h": null,
+          "clears_at_utc": null
+        },
+        {
+          "i": 1,
+          "mi": 25.0,
+          "lat": 41.265439,
+          "lon": -88.245122,
+          "elapsed_s": 1852.9697355764351,
+          "tz": "America/Chicago",
+          "level": 0,
+          "base_wind_level": 0,
+          "load_adjusted": false,
+          "drivers": [],
+          "rule": "All conditions Low",
+          "eta_utc": "2026-10-15T16:09:52Z",
+          "wind_mph": 7.9,
+          "gust_mph": 19.5,
+          "rain_in": 0.0,
+          "snow_in": 0.0,
+          "forecast_hour_utc": "2026-10-15T16:00:00Z",
+          "beyond_horizon": false,
+          "speed_factor": 1.0,
+          "slowdown": null,
+          "place": {
+            "road": "I-55",
+            "town": "Shorewood",
+            "state": "IL",
+            "distance_mi": 17.7,
+            "direction": "S"
+          },
+          "place_label": "I-55 · 18 mi S of Shorewood, IL",
+          "clears_in_h": null,
+          "clears_at_utc": null
+        },
+        {
+          "i": 2,
+          "mi": 50.0,
+          "lat": 41.003377,
+          "lon": -88.537554,
+          "elapsed_s": 3460.8249699966286,
+          "tz": "America/Chicago",
+          "level": 0,
+          "base_wind_level": 0,
+          "load_adjusted": false,
+          "drivers": [],
+          "rule": "All conditions Low",
+          "eta_utc": "2026-10-15T16:36:40Z",
+          "wind_mph": 10.1,
+          "gust_mph": 19.7,
+          "rain_in": 0.016,
+          "snow_in": 0.0,
+          "forecast_hour_utc": "2026-10-15T17:00:00Z",
+          "beyond_horizon": false,
+          "speed_factor": 1.0,
+          "slowdown": null,
+          "place": {
+            "road": "I-55",
+            "town": "Ottawa",
+            "state": "IL",
+            "distance_mi": 28.5,
+            "direction": "SE"
+          },
+          "place_label": "I-55 · 28 mi SE of Ottawa, IL",
+          "clears_in_h": null,
+          "clears_at_utc": null
+        }
+      ],
+      "risk": {
+        "miles_by_level": {
+          "low": 477.76817271417826,
+          "moderate": 475.0,
+          "high": 0.0,
+          "severe": 125.0,
+          "no_travel": 0.0,
+          "unknown": 0.0
+        },
+        "avg_risk": 0.7886668223458646,
+        "coverage": 1.0,
+        "max_level": 3
+      },
+      "weather_delay_s": 0.0
+    }
+  ]
+}

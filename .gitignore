@@ -1,0 +1,73 @@
+# ---- Internal planning & agent docs (local only, not part of the submission) ----
+/planning/
+/docs/
+/design/
+/AGENTS.md
+**/AGENTS.md
+/multi-agent-workflow.md
+/fs-assessment-spotter.pdf
+*.prompt.md
+.claude/
+.codex/
+
+# ---- Secrets ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---- Python / Django ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+
+# ---- Node / React ----
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+coverage/
+.eslintcache
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Tooling / OS ----
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.tmp
+.vercel/
+.netlify/
+.wrangler/
+
+# ---- Copyrighted local-only media (never commit or deploy) ----
+frontend/local-audio/
+# Audio that ships lives in frontend/public/audio/ and is listed in its CREDITS.txt (enforced by scripts/audio-guard.mjs)
+
+# ---- Worker handoff reports & internal notes (internal) ----
+# Every top-level .md in frontend/ and backend/ is internal EXCEPT the README (future reports are covered too).
+/frontend/*.md
+!/frontend/README.md
+/backend/*.md
+!/backend/README.md
+/backend/docs/
+/backend/.tmp/

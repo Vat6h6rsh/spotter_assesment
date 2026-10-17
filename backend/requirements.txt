@@ -1,0 +1,13 @@
+Django==5.2.18
+djangorestframework==3.18.3
+django-cors-headers==4.9.0
+httpx==0.28.1
+h3==4.5.0
+geonamescache==3.0.2
+tzfpy==2.1.1
+whitenoise==6.12.0
+gunicorn==26.2.0
+python-dotenv==1.2.4
+redis==7.4.1
+drf-spectacular==0.30.0
+drf-spectacular-sidecar==2026.10.1

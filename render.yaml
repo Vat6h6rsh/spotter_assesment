@@ -1,0 +1,26 @@
+# Render Blueprint: Django API on the free plan (sleeps after ~15 min idle; first request wakes it).
+# Frontend is deployed separately on Cloudflare Pages.
+services:
+  - type: web
+    name: spotter-weather-route-api
+    runtime: python
+    plan: free
+    region: ohio
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 60
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.5
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: TOMTOM_API_KEY
+        sync: false # set in the Render dashboard; never committed
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false # e.g. https://<project>.pages.dev
+      - key: WEATHER_DAILY_BUDGET
+        value: "9000"

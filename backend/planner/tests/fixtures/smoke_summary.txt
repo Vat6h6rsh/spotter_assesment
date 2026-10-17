@@ -1,0 +1,8 @@
+Provider: osrm; departure 2026-10-15T15:39:00Z
+A | I-80 Express / I-80 | 979.3 mi | Severe 100.00 mi | High 0.00 mi | coverage 100.0% | 27.74 h including rests
+B | I-70 / US-40 | 1077.8 mi | Severe 125.00 mi | High 0.00 mi | coverage 100.0% | 30.11 h including rests
+Recommendation: recommended A
+Reasons: 100 Severe mi vs 125 on B; Fastest elapsed time
+Departure advice: {'offset_h': 24, 'route_id': 'B', 'summary': 'Leave 24 h later: 0 Severe mi on B'}
+Server time: 4.332 s
+Payload: 42280 bytes JSON; 10373 bytes gzip

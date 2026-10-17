@@ -1,0 +1,68 @@
+.map-bottom-dock { position: absolute; bottom: 32px; left: 16px; right: 16px; z-index: 4; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); pointer-events: none; }
+.map-bottom-dock .corridor-legend-chip { position: static; order: -1; max-width: 100%; flex-shrink: 0; pointer-events: auto; }
+.map-preview-legend { position: absolute; top: var(--sp-3); left: var(--sp-3); z-index: 4; max-width: calc(100% - 88px); }
+.map-preview-legend .corridor-legend-chip { position: static; max-width: 100%; min-height: var(--control-height); }
+.map-region[data-driving="true"] .map-legend { top: 60px; left: var(--sp-3); right: auto; max-height: calc(100% - 76px); overflow-y: auto; }
+.map-region[data-driving="true"] .map-caption { top: 64px; }
+.drive-overlay { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); pointer-events: none; }
+.drive-hud { max-width: 100%; display: flex; align-items: center; gap: var(--sp-4); padding: var(--sp-2) var(--sp-3); border: 1px solid var(--primary); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--elev-2); pointer-events: auto; }
+.drive-route { display: flex; gap: var(--sp-2); align-items: center; min-width: 0; }
+.drive-route > div { min-width: 0; max-width: 192px; }
+.drive-route strong, .drive-route div > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drive-route div > span { font-size: var(--fs-caption); color: var(--muted); }
+.drive-time { font-size: var(--fs-body); white-space: nowrap; min-width: 88px; }
+.drive-rest { display: block; color: var(--primary); font-size: var(--fs-caption); }
+.drive-rest[hidden] { display: none; }
+.drive-buttons { display: flex; align-items: center; gap: var(--sp-1); }
+.drive-buttons .icon-button { width: 36px; min-width: 36px; height: 36px; }
+.drive-speeds { display: flex; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r-md); padding: 2px; }
+.drive-speeds button { display: flex; align-items: center; gap: var(--sp-1); border-radius: var(--r-sm); padding: var(--sp-2); font-size: var(--fs-caption); }
+.drive-speeds button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+.drive-music { display: flex; align-items: center; position: relative; }
+.drive-music-menu { min-height: 36px; padding: 0 2px; }
+.drive-track-menu { position: absolute; bottom: calc(100% + 16px); right: 0; width: 232px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--elev-2); padding: var(--sp-2); display: grid; gap: var(--sp-1); }
+.drive-track-menu button { text-align: left; min-height: var(--control-height); padding: var(--sp-2); border-radius: var(--r-sm); }
+.drive-track-menu button:hover, .drive-track-menu button[aria-pressed="true"] { background: var(--surface2); }
+.drive-track-menu .fine-print { padding: var(--sp-2); }
+.drive-credits { background: var(--surface); border-radius: var(--r-sm); padding: var(--sp-1) var(--sp-2); max-width: 100%; text-align: center; pointer-events: auto; }
+.drive-follow { pointer-events: auto; box-shadow: var(--elev-1); }
+.drive-complete { pointer-events: auto; animation: drive-celebrate 400ms ease-out both; width: max-content; max-width: calc(100% - 32px); display: flex; align-items: center; gap: var(--sp-3); background: var(--surface); padding: var(--sp-3); border: 1px solid var(--primary); border-radius: var(--r-lg); box-shadow: var(--elev-2); }
+.drive-complete span { display: block; font-size: var(--fs-caption); color: var(--muted); margin-top: var(--sp-1); }
+.drive-monument-marker { pointer-events: none; z-index: 3; }
+.drive-monument { position: relative; transform-origin: 50% 100%; animation: drive-drop 520ms ease-out both; display: grid; justify-items: center; }
+.drive-monument::after { content: ""; position: absolute; bottom: -6px; width: 64px; height: 8px; border-radius: 50%; background: #0003; animation: drive-shadow 520ms ease-out both; }
+.drive-monument-body { width: 248px; padding: 0 0 var(--sp-3); background: var(--surface); color: var(--text); border: 2px solid var(--monument-color); border-radius: var(--r-md); box-shadow: 0 8px 0 color-mix(in srgb, var(--monument-color) 28%, var(--surface)), 0 20px 32px #0004; display: grid; gap: var(--sp-2); transform-origin: 50% 100%; transition: opacity var(--dur-base), transform var(--dur-base); }
+.drive-monument-body > :not(.drive-monument-badge) { margin-inline: var(--sp-3); }
+.drive-monument-body > strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--fs-body); }
+.drive-monument-badge { display: flex; gap: var(--sp-2); align-items: center; padding: var(--sp-2) var(--sp-3); background: var(--monument-color); color: var(--monument-ink); border-radius: var(--r-sm) var(--r-sm) 0 0; font-size: var(--fs-body); font-weight: 600; }
+.drive-monument-driver { font-size: var(--fs-title); font-weight: 600; line-height: 1.4; }
+.drive-monument-actionable { pointer-events: auto; }
+.drive-monument-action { justify-self: start; min-height: 32px; padding: var(--sp-1) var(--sp-2); font-size: var(--fs-caption); }
+.drive-monument-pin { background: var(--surface); border: 2px solid var(--monument-color); color: var(--monument-color); padding: 2px; border-radius: var(--r-sm); position: relative; margin-top: 16px; }
+.drive-monument-pin::before { content: ''; height: 16px; width: 2px; background: var(--monument-color); position: absolute; bottom: 100%; left: 50%; }
+.drive-monument[data-collapsed="true"] .drive-monument-body { opacity: 0; transform: scale(.08); pointer-events: none; }
+.drive-monument[data-collapsed="true"]::after { display: none; }
+@keyframes drive-drop { 0% { opacity: 0; transform: translateY(-56px) scale(.96); } 58% { opacity: 1; transform: translateY(5px) scale(1.015, .985); } 78% { transform: translateY(-3px); } 100% { transform: none; } }
+@keyframes drive-shadow { 0% { opacity: 0; transform: scale(.4); } 58% { opacity: 1; transform: scale(1.2, .65); } 100% { transform: none; } }
+.drive-edge-pulse { position: absolute; inset: 0; z-index: 5; border: 3px solid var(--stop); border-radius: var(--r-md); pointer-events: none; animation: drive-pulse 700ms ease-out both; }
+@keyframes drive-pulse { from { opacity: .55; } to { opacity: 0; } }
+.drive-title { align-self: flex-start; flex-shrink: 0; max-width: min(560px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--elev-2); overflow: hidden; animation: drive-title 2000ms ease both; }
+.drive-title-band { display: block; background: var(--accent); color: var(--on-accent); padding: var(--sp-3); font-size: var(--fs-title); line-height: 1.3; }
+.drive-title > div { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; padding: var(--sp-3); }
+.drive-title time { font-size: var(--fs-caption); flex-basis: 100%; }
+@keyframes drive-title { 0% { opacity: 0; transform: translateX(-40px); } 15%, 82% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateX(32px); } }
+.drive-complete .drive-verdict { display: inline-block; padding: var(--sp-1) var(--sp-2); border: 2px solid var(--primary); border-radius: var(--r-sm); color: var(--primary); font-weight: 600; transform: rotate(-2deg); animation: drive-stamp 450ms ease-out both; }
+.drive-complete .drive-verdict[data-blocked="true"] { color: var(--stop); border-color: var(--stop); }
+@keyframes drive-celebrate { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+@keyframes drive-stamp { 0%, 35% { opacity: 0; transform: scale(1.2) rotate(-6deg); } 100% { opacity: 1; transform: scale(1) rotate(-2deg); } }
+.truck-marker.drive-truck-hidden { visibility: hidden; }
+.truck-marker.drive-truck-fallback { width: 48px; height: 48px; border: 2px solid var(--primary); z-index: 2; }
+.truck-marker.drive-truck-fallback > svg { width: 28px; height: 28px; }
+.risk-strips[data-drive="true"] .risk-strip-row { opacity: .3; }
+.risk-strips[data-drive="true"] .risk-strip-row[data-driving="true"] { opacity: 1; }
+.risk-strips[data-drive="true"] .risk-strip-row[data-driving="true"] .risk-strip::after { content: ''; position: absolute; inset: 0 0 0 var(--travelled, 0%); background: var(--surface); opacity: .75; pointer-events: none; }
+.risk-strips[data-drive="true"] .risk-strip-row[data-driving="true"] .risk-playhead { box-shadow: 0 0 8px var(--primary); z-index: 2; }
+@media (max-width: 1279px) { .drive-hud { flex-wrap: wrap; justify-content: center; column-gap: var(--sp-3); } .drive-route { flex: 1; } .drive-buttons { justify-content: center; } }
+@media (max-width: 600px) { .map-bottom-dock { left: 8px; right: 8px; bottom: 28px; } .drive-hud { gap: var(--sp-2); width: 100%; padding: var(--sp-2); } .drive-route > div { max-width: 180px; } .drive-buttons { width: 100%; } .drive-buttons .icon-button { width: 44px; min-width: 44px; height: 44px; } .drive-speeds button { min-height: 40px; } .drive-track-menu { right: -44px; } .drive-credits { font-size: var(--fs-caption); } }
+@media (max-width: 380px) { .drive-buttons { display: grid; grid-template-columns: repeat(4, auto); } .drive-speeds { grid-column: 1 / -1; justify-self: center; } }
+@media (prefers-reduced-motion: reduce) { .drive-title, .drive-edge-pulse { display: none; } .drive-monument, .drive-monument::after, .drive-complete, .drive-complete .drive-verdict { animation: none; } .drive-monument-body { transition: none; } }

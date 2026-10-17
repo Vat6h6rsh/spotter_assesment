@@ -1,0 +1,140 @@
+{
+  "available": true,
+  "generated_at": "2026-10-17T05:00:00Z",
+  "window_hours": 48,
+  "hazard": "rain",
+  "headline": "Heavy rain on I-75 near Fort Myers, Florida",
+  "summary": "Forecast rain up to 3.60 in/hr near Fort Myers, FL, enough to stop loaded trucks; 15 relevant NWS alerts active.",
+  "peak": {
+    "place": "Fort Myers, FL",
+    "lat": 26.62168,
+    "lon": -81.84059,
+    "gust_mph": 10.0,
+    "wind_mph": 5.0,
+    "rain_in": 3.6,
+    "snow_in": 0.0,
+    "at_utc": "2026-10-17T23:00:00Z",
+    "level_for_cargo": 4,
+    "cargo_lb": 43000
+  },
+  "suggested_trip": {
+    "origin": {
+      "label": "Naples, FL, USA",
+      "lat": 26.14234,
+      "lon": -81.79596,
+      "tz": "America/New_York"
+    },
+    "destination": {
+      "label": "Gainesville, FL, USA",
+      "lat": 29.65163,
+      "lon": -82.32483,
+      "tz": "America/New_York"
+    },
+    "cargo_lb": 43000,
+    "departure_local": "2026-10-17T19:00",
+    "corridor": "I-75",
+    "why": "I-75 crosses the heavy-rain zone near Fort Myers, FL.",
+    "verified": {
+      "max_level": 4,
+      "high_or_worse_mi": 75.0,
+      "route_label": "I-75"
+    }
+  },
+  "alerts": [
+    {
+      "event": "High Wind Warning",
+      "count": 15,
+      "states": [
+        "AZ",
+        "NM",
+        "TX"
+      ]
+    }
+  ],
+  "more": [
+    {
+      "hazard": "wind",
+      "headline": "High winds on I-10 near El Paso, Texas",
+      "summary": "Forecast gusts up to 50 mph near El Paso, TX, enough to stop loaded trucks; 15 relevant NWS alerts active.",
+      "peak": {
+        "place": "El Paso, TX",
+        "lat": 31.75872,
+        "lon": -106.48693,
+        "gust_mph": 50.3,
+        "wind_mph": 5.0,
+        "rain_in": 0.0,
+        "snow_in": 0.0,
+        "at_utc": "2026-10-17T23:00:00Z",
+        "level_for_cargo": 4,
+        "cargo_lb": 43000
+      },
+      "suggested_trip": {
+        "origin": {
+          "label": "Willcox, AZ, USA",
+          "lat": 32.25285,
+          "lon": -109.83201,
+          "tz": "America/Phoenix"
+        },
+        "destination": {
+          "label": "Fort Stockton, TX, USA",
+          "lat": 30.89404,
+          "lon": -102.87932,
+          "tz": "America/Chicago"
+        },
+        "cargo_lb": 43000,
+        "departure_local": "2026-10-17T12:00",
+        "corridor": "I-10",
+        "why": "I-10 crosses the high-wind zone near El Paso, TX.",
+        "verified": {
+          "max_level": 4,
+          "high_or_worse_mi": 75.0,
+          "route_label": "I-10"
+        }
+      }
+    },
+    {
+      "hazard": "snow",
+      "headline": "Heavy snow on I-80 near Truckee, California",
+      "summary": "Forecast snow up to 2.50 in/hr near Truckee, CA, rated Severe for 43,000 lb cargo; 15 relevant NWS alerts active.",
+      "peak": {
+        "place": "Truckee, CA",
+        "lat": 39.32796,
+        "lon": -120.18325,
+        "gust_mph": 10.0,
+        "wind_mph": 5.0,
+        "rain_in": 0.0,
+        "snow_in": 2.5,
+        "at_utc": "2026-10-17T23:00:00Z",
+        "level_for_cargo": 3,
+        "cargo_lb": 43000
+      },
+      "suggested_trip": {
+        "origin": {
+          "label": "Sacramento, CA, USA",
+          "lat": 38.58157,
+          "lon": -121.4944,
+          "tz": "America/Los_Angeles"
+        },
+        "destination": {
+          "label": "Battle Mountain, NV, USA",
+          "lat": 40.64213,
+          "lon": -116.93427,
+          "tz": "America/Los_Angeles"
+        },
+        "cargo_lb": 43000,
+        "departure_local": "2026-10-17T15:00",
+        "corridor": "I-80",
+        "why": "I-80 crosses the snow and ice zone near Truckee, CA.",
+        "verified": {
+          "max_level": 3,
+          "high_or_worse_mi": 50.0,
+          "route_label": "I-80"
+        }
+      }
+    }
+  ],
+  "sources": {
+    "forecast": "Open-Meteo",
+    "alerts": "NWS api.weather.gov"
+  }
+}

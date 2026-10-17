@@ -1,0 +1,1 @@
+{"recorded_at":"2026-10-15","request":"https://photon.komoot.io/api?q=joliet%2C+il&limit=20&lang=en","status":403,"note":"The single permitted live request was rejected. No successful live Photon response fixture is available; photon_shape.json is synthetic."}

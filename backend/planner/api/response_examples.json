@@ -1,0 +1,54 @@
+{
+  "heatmap": {
+    "plan_id": "p_0f91642d938245a79299e167a84375d9",
+    "res": 4,
+    "base_utc": "2026-10-15T16:00:00Z",
+    "hours": 49,
+    "cells": [
+      "8426081ffffffff",
+      "8426085ffffffff",
+      "8426089ffffffff"
+    ],
+    "levels_b64": "AAAAAAAAAAAAAAAAAAEAAAEAAAADAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAwMBAwMDAwMBAwMBAQEBAQEBAQEBAQEBAQEBAQEBAAEBAQMBAQEBAQEBAwMBAwMBAwMBAQMBAwEBAwEBAQEBAwEBAQEBAQEBAQEBAQEAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "fetched_at": "2026-10-15T15:07:15Z"
+  },
+  "geocode": {
+    "results": [
+      {
+        "id": "openmeteo:4898015",
+        "label": "Joliet, IL, USA",
+        "lat": 41.52519,
+        "lon": -88.0834,
+        "tz": "America/Chicago"
+      },
+      {
+        "id": "openmeteo:4898033",
+        "label": "Joliet Regional Airport, IL, USA",
+        "lat": 41.52037,
+        "lon": -88.17864,
+        "tz": "America/Chicago"
+      },
+      {
+        "id": "openmeteo:6298495",
+        "label": "Joliet Regional Airport, IL, USA",
+        "lat": 41.51806,
+        "lon": -88.17528,
+        "tz": "America/Chicago"
+      },
+      {
+        "id": "openmeteo:4898028",
+        "label": "Joliet Junior College Lake Dam, IL, USA",
+        "lat": 41.51836,
+        "lon": -88.18506,
+        "tz": "America/Chicago"
+      },
+      {
+        "id": "openmeteo:4898023",
+        "label": "Joliet East Side Historic District, IL, USA",
+        "lat": 41.52059,
+        "lon": -88.07645,
+        "tz": "America/Chicago"
+      }
+    ]
+  }
+}

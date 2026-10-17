@@ -1,0 +1,15 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {"id": "wind-1", "properties": {"status": "Actual", "severity": "Severe", "event": "High Wind Warning", "geocode": {"UGC": ["TXZ418", "TXZ419", "NMZ411", "AMZ101"]}}},
+    {"id": "wind-2", "properties": {"status": "Actual", "severity": "Extreme", "event": "High Wind Warning", "geocode": {"UGC": ["AZZ503"]}}},
+    {"id": "wind-1", "properties": {"status": "Actual", "severity": "Severe", "event": "High Wind Warning", "geocode": {"UGC": ["TXZ418"]}}},
+    {"id": "snow-1", "properties": {"status": "Actual", "severity": "Severe", "event": "Blizzard Warning", "geocode": {"UGC": ["WYZ106", "COZ035"]}}},
+    {"id": "flood-1", "properties": {"status": "Actual", "severity": "Severe", "event": "Flash Flood Warning", "geocode": {"UGC": ["LAC001", "MSC001"]}}},
+    {"id": "other-1", "properties": {"status": "Actual", "severity": "Severe", "event": "Red Flag Warning", "geocode": {"UGC": ["TXZ418"]}}},
+    {"id": "test-1", "properties": {"status": "Test", "severity": "Extreme", "event": "Tornado Warning", "geocode": {"UGC": ["OKC001"]}}},
+    {"id": "moderate-1", "properties": {"status": "Actual", "severity": "Moderate", "event": "Flood Warning", "geocode": {"UGC": ["TXC001"]}}},
+    {"id": "offshore-1", "properties": {"status": "Actual", "severity": "Extreme", "event": "Hurricane Warning", "geocode": {"UGC": ["AMZ101", "ANZ101", "GMZ001", "AKZ001", "HIZ001", "PRZ001"]}}},
+    {"id": "broken-1", "properties": {"status": "Actual", "severity": "Severe", "event": "High Wind Warning", "geocode": {"UGC": ["TX001", "TXZabc", "TXZ000extra", null]}}}
+  ]
+}

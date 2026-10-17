@@ -1,0 +1,1 @@
+{"summary":{"query":"joliet","queryType":"NON_NEAR","queryTime":12,"numResults":1,"offset":0,"totalResults":1},"results":[{"type":"Geography","id":"US/GEO/p0/1","score":5.1,"address":{"municipality":"Joliet","countrySubdivision":"IL","countryCode":"US","countryCodeISO3":"USA","country":"United States","freeformAddress":"Joliet, IL"},"position":{"lat":41.525,"lon":-88.081}}]}
