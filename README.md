@@ -3,8 +3,8 @@
 A React + Django web app that helps a truck driver choose the **safest route** using **weather at the hour the
 truck will actually be there**, **load weight** and **travel time**.
 
-**Live app:** `https://<your-project>.pages.dev` · **API docs:** `https://<your-api>.onrender.com/api/docs/`
-*(fill in after deploying)*
+**Live app:** https://spotter-weather-route.pages.dev · **API docs:** https://spotter-weather-route-api.onrender.com/api/docs/
+*(The API runs on free hosting and sleeps when idle; the first visit can take up to a minute while it wakes, and the app shows a wake-up card meanwhile.)*
 
 ---
 
