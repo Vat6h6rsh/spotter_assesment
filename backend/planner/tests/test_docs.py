@@ -6,7 +6,7 @@ import pytest
 from django.contrib.staticfiles import finders
 from rest_framework import serializers
 
-from planner.api.schema import PlanResponse, DepartureAdvice, Health, GeocodeResult, HeatmapResponse, Error, HotspotAvailable, HotspotUnavailable
+from planner.api.schema import PlanResponse, DepartureAdvice, Health, GeocodeResult, HeatmapResponse, Error, HotspotAvailable, HotspotUnavailable, TruckRouteStatus
 
 
 def assert_documented_fields(serializer, data, path="response"):
@@ -34,12 +34,12 @@ def assert_matches(serializer_class, data):
     assert serializer.is_valid(), serializer.errors
 
 
-def test_schema_contains_five_api_paths(client):
+def test_schema_contains_six_api_paths(client):
     response = client.get("/api/schema/", HTTP_ACCEPT="application/vnd.oai.openapi+json")
     assert response.status_code == 200
     schema = response.json()
     assert schema["openapi"].startswith("3.")
-    assert set(schema["paths"]) == {"/api/health", "/api/geocode", "/api/plans", "/api/plans/{plan_id}/heatmap", "/api/weather/hotspot"}
+    assert set(schema["paths"]) == {"/api/health", "/api/geocode", "/api/plans", "/api/plans/{plan_id}/heatmap", "/api/weather/hotspot", "/api/plans/{plan_id}/truck-route"}
     assert schema["info"]["title"] == "Spotter Weather Route API"
     assert schema["info"]["version"] == "0.5.0"
     assert "Place names: GeoNames (CC BY 4.0)" in schema["info"]["description"]
@@ -48,6 +48,10 @@ def test_schema_contains_five_api_paths(client):
     assert hotspot['tags'] == ['Weather']
     assert set(hotspot['responses']) == {'200', '429'}
     assert len(schema['components']['schemas']['HotspotResponse']['oneOf']) == 2
+    truck = schema['paths']['/api/plans/{plan_id}/truck-route']['get']
+    assert truck['tags'] == ['Plans']
+    assert set(truck['responses']) == {'200', '404', '429'}
+    assert len(truck['responses']['200']['content']['application/json']['examples']) == 4
 
 
 @pytest.mark.parametrize("path,asset", [
@@ -102,15 +106,20 @@ def test_other_documented_responses(client, plan_request, replay):
     plan = client.post("/api/plans", plan_request, format="json").json()
     assert_matches(HeatmapResponse, client.get(f"/api/plans/{plan['plan_id']}/heatmap").json())
     assert_matches(Error, client.get("/api/plans/p_missing/heatmap").json())
+    assert_matches(TruckRouteStatus, client.get(f"/api/plans/{plan['plan_id']}/truck-route").json())
+    assert_matches(Error, client.get('/api/plans/p_missing/truck-route').json())
 
 
 def test_recorded_example_matches_source_and_schema(fixture_json):
-    from planner.api.examples import PLAN, REPLAY
+    from planner.api.examples import PLAN, REPLAY, PENDING_PLAN_EXAMPLE, TRUCK_ROUTE_EXAMPLES
     expected = fixture_json("smoke_plan.json")
     for route in expected["routes"]:
         route["checkpoints"] = route["checkpoints"][:3]
     assert PLAN == expected
     assert_matches(PlanResponse, PLAN)
+    assert_matches(PlanResponse, PENDING_PLAN_EXAMPLE.value)
+    for example in TRUCK_ROUTE_EXAMPLES:
+        assert_matches(TruckRouteStatus, example.value)
     assert_matches(GeocodeResult, REPLAY["geocode"])
     assert_matches(HeatmapResponse, REPLAY["heatmap"])
     import base64
@@ -131,7 +140,7 @@ def test_all_documentation_fields_have_help_text():
                 walk(child)
         elif isinstance(field, serializers.ListField):
             walk(field.child)
-    for cls in (PlanResponse, Health, GeocodeResult, HeatmapResponse, Error, HotspotAvailable, HotspotUnavailable):
+    for cls in (PlanResponse, Health, GeocodeResult, HeatmapResponse, Error, HotspotAvailable, HotspotUnavailable, TruckRouteStatus):
         for field in cls().fields.values():
             walk(field)
 

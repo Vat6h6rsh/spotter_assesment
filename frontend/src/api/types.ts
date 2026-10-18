@@ -167,12 +167,16 @@ export interface Plan {
   created_at: string;
   inputs: PlanRequest & { departure_utc: string; origin_tz: string };
   providers: {
-    routing: { name: "tomtom" | "osrm"; truck_aware: boolean };
+    routing: { name: "tomtom" | "osrm"; truck_aware: boolean; truck_pending?: boolean; fallback_reason?: null | "no_key" | "pending" | "timeout" | "error" };
     weather: { name: "open-meteo"; fetched_at: string };
   };
   warnings: { code: string; message: string }[];
   recommendation: Recommendation;
   routes: Route[];
+}
+export interface TruckRouteStatus {
+  status: "pending" | "ready" | "failed" | "not_applicable";
+  retry_after_s: number | null;
 }
 export interface Heatmap {
   plan_id: string;

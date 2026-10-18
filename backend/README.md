@@ -15,7 +15,12 @@ No migrations or database setup are required. Environment variables (see `.env.e
 
 API documentation: open [Swagger UI](http://localhost:8000/api/docs/) at `/api/docs/` or [Redoc](http://localhost:8000/api/redoc/) at `/api/redoc/`. `/api/` redirects to Swagger UI; the OpenAPI 3 schema is at `/api/schema/` (JSON with `Accept: application/vnd.oai.openapi+json`, YAML by default). Both UIs use local drf-spectacular-sidecar assets; run `collectstatic` after installing/upgrading dependencies for production. Validate documentation with `.\.venv\Scripts\python.exe manage.py spectacular --validate --fail-on-warn --file NUL`. Documentation serializers are separate from runtime validation; fixture-backed drift tests check nested response fields.
 
-Endpoints (no trailing slash): `GET /api/health`, `GET /api/geocode?q=Joliet&limit=5`, `GET /api/weather/hotspot`, `POST /api/plans`, `GET /api/plans/<plan_id>/heatmap`. JSON requests and responses are documented with examples at `/api/docs/`. HTTP errors have `{error: {code, message, field}}`. Clients should request `Accept-Encoding: gzip` and load the heatmap separately.
+Offline validation on 2026-10-18 for progressive truck routing: **347 passed in
+43.72 s** (327 existing + 20 new); `manage.py check` reported no issues
+(0 silenced), and strict spectacular validation exited 0 without warnings.
+Tests use respx and event-controlled background jobs; no live providers were called.
+
+Endpoints (no trailing slash): `GET /api/health`, `GET /api/geocode?q=Joliet&limit=5`, `GET /api/weather/hotspot`, `POST /api/plans`, `GET /api/plans/<plan_id>/heatmap`, `GET /api/plans/<plan_id>/truck-route`. JSON requests and responses are documented with examples at `/api/docs/`. HTTP errors have `{error: {code, message, field}}`. Clients should request `Accept-Encoding: gzip` and load the heatmap separately.
 
 The optional welcome hotspot scans 30 trips / 300 unique sample points. It returns
 the main showcase plus `more` (0–2 additional High-or-worse trips at 43,000 lb),
@@ -36,8 +41,7 @@ most three main candidates; all main/extra verification shares a further 30-seco
 budget after the scan. Failed/unverified extras are omitted; no verified main gives
 available:false. Results, including verification evidence and "nothing notable", cache
 for one hour under hotspot:v3; a failed scan (coverage below 80% or budget exhausted) caches
-for only 5 minutes (FAILURE_TTL), so a cold-start blip doesn't hide the demo for an hour. Plan-result caching remains 10 minutes, so a later replan may
-reflect newer weather. In-flight provider work can finish caching after a deadline.
+for only 5 minutes (FAILURE_TTL), so a cold-start blip doesn't hide the demo for an hour. Plan-result caching is up to 10 minutes, with shorter lifetimes for progressive routing below. Verification accepts truck, car and pending plans using the geometry actually returned; each candidate waits at most 8 seconds on TomTom within the existing shared 30-second verification budget. In-flight provider work can finish caching after a deadline.
 
 Warm the cache before the first welcome request with:
 
@@ -62,7 +66,69 @@ two nulls. Only offset 0 computes this, without extra API calls; it does not pro
 that the weather stays clear. Recorded examples can be recomputed offline using
 `python manage.py refresh_clearance_examples`.
 
-TomTom is used when `TOMTOM_API_KEY` is set; failures fall back to OSRM with the warning **car routing: truck restrictions not applied**. Geocoding falls back through Open-Meteo geocoding then Photon and filters results to US/Canada. Open-Meteo needs no key; `OPEN_METEO_API_KEY` selects its commercial endpoint. No keys are checked into this package. Routing/search fields were verified against current official [TomTom Routing v1](https://docs.tomtom.com/routing-api/documentation/tomtom-maps/v1/calculate-route), [Guidance](https://docs.tomtom.com/routing-api/documentation/tomtom-maps/v1/guidance-instructions), and [Fuzzy Search](https://docs.tomtom.com/search-api/documentation/search-service/fuzzy-search) docs on 2026-10-15.
+With `TOMTOM_API_KEY`, progressive truck routing starts TomTom in a persistent
+background executor (two workers, thread prefix `truck-route`), with a **28-second
+read timeout and no retry**. Requests wait at most **8 seconds** on TomTom. A fast
+answer returns a truck-aware plan. Otherwise OSRM supplies car geometry while
+TomTom keeps running, even after the HTTP request ends. Concurrent trips with the
+same route digest share one job per process. A completed truck route is cached for
+six hours, so re-submitting identical inputs builds a truck-aware plan. Failed
+TomTom jobs count toward the existing circuit breaker and suppress new jobs for
+five minutes; an open breaker falls back immediately. OSRM failure still returns
+the existing HTTP 503 provider error. Without a key, OSRM is used directly.
+
+`providers.routing` always has exactly these four keys (this is the pending case):
+
+```json
+{"name":"osrm","truck_aware":false,"truck_pending":true,"fallback_reason":"pending"}
+```
+
+Truck-aware routing is
+`{"name":"tomtom","truck_aware":true,"truck_pending":false,"fallback_reason":null}`.
+Other car plans use `truck_pending:false` and reason `no_key`, `timeout` or `error`.
+The `CAR_ROUTING` warning is respectively:
+
+- `pending`: "Truck route still loading; showing car routing meanwhile."
+- `timeout`: "Truck routing timed out; car routing: truck restrictions not applied."
+- `error`: "Truck routing unavailable; car routing: truck restrictions not applied."
+- `no_key`: "car routing: truck restrictions not applied"
+
+Poll `GET /api/plans/<plan_id>/truck-route` (60/min per IP, scoped throttle).
+It only reads cache and local jobs, never calls providers, and returns HTTP 200:
+
+```json
+{"status":"pending","retry_after_s":3}
+```
+
+`status` is `pending`, `ready`, `failed` or `not_applicable`; `retry_after_s` is
+always present, 3 while pending and null otherwise. On `ready`, re-POST the same
+trip inputs. `failed` means a failed job or no surviving local job/result (for
+example after a restart); stop polling. A plan already using truck routing or
+without a key is `not_applicable`. Unknown/expired plans return HTTP 404 with
+`{"error":{"code":"PLAN_EXPIRED","message":"Plan expired; submit it again.","field":null}}`,
+the same envelope as the heatmap endpoint. The cached plan keeps its original
+geometry; its private cache entry includes `route_digest`, never exposed publicly.
+
+| Cache key | Lifetime | Purpose |
+| --- | --- | --- |
+| `route:v2:{digest}` | 21,600 s (6 h) | TomTom results only; legacy OSRM entries are ignored |
+| `route-car:v1:{digest}` | 300 s | OSRM geometry |
+| `route-truck-failed:v1:{digest}` | 300 s | `timeout` or `error`; prevents a new truck job |
+| `plan-result:v3:{inputs digest}` | 600 s truck-aware/keyless; at most 300 s failed truck fallback; 3 s pending | Identical normalized plan requests share a cache lock; pending/car results are bypassed immediately when a truck result arrives, and pending results when failure arrives |
+| `plan:v1:{plan_id}` / heatmap | 3,600 s (1 h) | Original plan geometry, private digest and lazy weather corridor |
+| Weather cells | 3,600 s (1 h) | Existing shared forecast cache |
+| Geocoding | 604,800 s (7 days) | Normalized query and limit |
+
+The route digest is unchanged: endpoints at four decimals, departure hour,
+`ceil(cargo_lb/5000)` and whether a TomTom key exists. The job registry and executor
+are process-local. **With Redis and several gunicorn workers, each process may
+run its own TomTom job for a digest**; this duplication is acceptable. Redis shares
+completed results/failure markers and plan locks, but status is `failed` on a
+different process if no shared result/marker or local job exists yet. Keep the
+default one worker / four request threads with LocMem; a process restart loses
+its cache and jobs. These HTTP read timeouts are not an overall plan deadline.
+
+Geocoding falls back through Open-Meteo geocoding then Photon and filters results to US/Canada. Open-Meteo needs no key; `OPEN_METEO_API_KEY` selects its commercial endpoint. No keys are checked into this package. Routing/search fields were verified against current official [TomTom Routing v1](https://docs.tomtom.com/routing-api/documentation/tomtom-maps/v1/calculate-route), [Guidance](https://docs.tomtom.com/routing-api/documentation/tomtom-maps/v1/guidance-instructions), and [Fuzzy Search](https://docs.tomtom.com/search-api/documentation/search-service/fuzzy-search) docs on 2026-10-15.
 
 `python manage.py smoke_plan` runs one live Joliet → Denver plan and prints route labels, exposure, verdict, timing and payload size. `--record-fixtures` also records responses and attempts geocoding unless its recorded failure exists. The initial authorized calls are already complete; tests replay fixtures and never use the network. See [the captured smoke output](planner/tests/fixtures/smoke_summary.txt) and [fixture provenance](planner/tests/fixtures/README.md).
 
@@ -107,7 +173,7 @@ Implementation choices where the spec leaves details open:
 - DST gaps and ambiguous departure wall times return a field validation error. Times elsewhere in the response are UTC plus IANA zones.
 - Near-duplicate routes use length-weighted 1 km samples with a 40 m shared-road tolerance. Display geometry uses 80 m Douglas–Peucker simplification. Progress uses exact checkpoint and rest knots; classification uses full geometry and provider timing.
 - Weather budget counts location forecasts, not HTTP batches. Cells are cached for 60 minutes; exhausted or failed cells remain Unknown. Heatmap weather warnings use the CORS-exposed `X-Weather-Warnings` response header (a JSON array), preserving the specified response body fields.
-- Cache TTLs: results 10 minutes, plans/heatmaps 1 hour, routes 6 hours, geocoding 7 days. Route keys round endpoints to four decimals and cargo into 5,000 lb buckets as specified. Truck classification always uses the exact entered cargo; the routing request uses the exact cargo plus 35,000 lb converted to kg.
+- Cache TTLs follow the table above: truck routes 6 hours, OSRM/failures 5 minutes, pending plans 3 seconds, other plan results up to 10 minutes, plans/heatmaps 1 hour, geocoding 7 days. Truck classification always uses the exact entered cargo; the routing request uses the exact cargo plus 35,000 lb converted to kg.
 
 Docker uses Python 3.13 and gunicorn: `docker build -t weather-backend .`, then `docker run --rm -p 8000:8000 --env-file .env weather-backend`. `PORT` controls the bind port. The default is one worker with four threads so LocMem budgets/plans stay in one process. Set `REDIS_URL` before adding workers. Deployment itself is out of scope.
 

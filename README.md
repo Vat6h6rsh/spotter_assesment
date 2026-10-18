@@ -88,6 +88,7 @@ npx vitest run && npm run build && npm run lint
 | `GET /api/geocode?q=Joliet` | Place search (US/Canada) with time zone |
 | `POST /api/plans` | Routes, checkpoints, risk, recommendation and departure advice |
 | `GET /api/plans/<id>/heatmap` | Corridor heatmap: 49 hourly frames |
+| `GET /api/plans/<id>/truck-route` | Whether the slower truck-aware route is ready (the app shows a car route meanwhile) |
 | `GET /api/weather/hotspot` | Today's toughest trucking weather, with verified showcase trips |
 
 Full OpenAPI docs with examples are at `/api/docs/` (Swagger) and `/api/redoc/`.

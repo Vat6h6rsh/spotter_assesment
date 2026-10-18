@@ -1,10 +1,14 @@
-from dataclasses import asdict
+from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
+from threading import Lock
+import time
 from uuid import uuid4
 
 import h3
+import httpx
 from django.conf import settings
 from django.core.cache import cache
 from tzfpy import get_tz
@@ -20,9 +24,26 @@ from planner.domain.weather import clearance, sample
 from planner.domain.weather_delay import NONE as NO_SLOWDOWN, adjusted_geometry, slowdown
 from planner.providers.base import ProviderError, RoutingResult
 from planner.providers.osrm import OSRMRouter
-from planner.providers.resilience import singleflight
+from planner.providers.resilience import cache_lock, singleflight
 from planner.providers.tomtom import TomTomRouter
 from .weather_store import WeatherStore
+
+TRUCK_WAIT_S = 8.0
+TRUCK_TIMEOUT_S = 28.0
+TRUCK_RESULT_TTL = 21600
+CAR_FALLBACK_TTL = 300
+TRUCK_FAILED_TTL = 300
+
+_truck_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="truck-route")
+_truck_jobs: dict[str, Future] = {}
+_truck_jobs_lock = Lock()
+
+
+@dataclass(frozen=True)
+class PlanRouting(RoutingResult):
+    """Request-specific fallback state; cached provider results stay immutable."""
+    truck_pending: bool = False
+    fallback_reason: str | None = None
 
 
 def iso(value: datetime) -> str:
@@ -40,31 +61,158 @@ def advice_gain(current: RouteScore, better: RouteScore) -> str:
     return f"{round((current.total_s - better.total_s) / 60)} min faster"
 
 
-def get_routing(inputs: dict) -> RoutingResult:
+def route_digest(inputs: dict) -> str:
     origin, destination = inputs["origin"], inputs["destination"]
     departure = datetime.fromisoformat(inputs["departure_utc"])
     import math
     bucket = math.ceil(inputs["cargo_lb"] / 5000)
     coordinates = [round(p[k], 4) for p in (origin, destination) for k in ("lat", "lon")]
     signature = [coordinates, departure.strftime("%Y-%m-%dT%H"), bucket, bool(settings.TOMTOM_API_KEY)]
-    digest = hashlib.sha256(json.dumps(signature).encode()).hexdigest()
+    return hashlib.sha256(json.dumps(signature).encode()).hexdigest()
 
-    def compute() -> RoutingResult:
-        start, end = (origin["lat"], origin["lon"]), (destination["lat"], destination["lon"])
-        if settings.TOMTOM_API_KEY:
-            try:
-                return TomTomRouter().routes(start, end, departure, inputs["cargo_lb"])
-            except ProviderError:
-                pass
-        return OSRMRouter().routes(start, end, departure, inputs["cargo_lb"])
 
-    return singleflight(f"route:v2:{digest}", 21600, compute)
+def _truck_result(digest: str) -> RoutingResult | None:
+    result = cache.get(f"route:v2:{digest}")
+    # Ignore legacy six-hour OSRM entries under this key during rollout.
+    return result if result is not None and result.provider == "tomtom" and result.truck_aware else None
+
+
+def _run_truck(digest: str, inputs: dict) -> RoutingResult | None:
+    try:
+        origin, destination = inputs["origin"], inputs["destination"]
+        result = TomTomRouter().routes(
+            (origin["lat"], origin["lon"]), (destination["lat"], destination["lon"]),
+            datetime.fromisoformat(inputs["departure_utc"]), inputs["cargo_lb"],
+            timeout=TRUCK_TIMEOUT_S, retry=False)
+        cache.set(f"route:v2:{digest}", result, TRUCK_RESULT_TTL)
+        cache.delete(f"route-truck-failed:v1:{digest}")
+        return result
+    except Exception as exc:
+        # get_json preserves the HTTP cause and records the circuit-breaker failure.
+        cause = exc
+        while cause is not None:
+            if isinstance(cause, (httpx.TimeoutException, TimeoutError)):
+                reason = "timeout"
+                break
+            cause = cause.__cause__
+        else:
+            reason = "error"
+        cache.set(f"route-truck-failed:v1:{digest}", reason, TRUCK_FAILED_TTL)
+        return None
+
+
+def _truck_job(digest: str, inputs: dict) -> Future:
+    with _truck_jobs_lock:
+        # Recheck under the lock: a just-finished job may have left the registry.
+        result = _truck_result(digest)
+        failed = cache.get(f"route-truck-failed:v1:{digest}")
+        if result is not None or failed is not None:
+            future = Future()
+            future.set_result(result)
+            return future
+        if digest in _truck_jobs:
+            return _truck_jobs[digest]
+        if cache.get("circuit:tomtom:open"):
+            cache.set(f"route-truck-failed:v1:{digest}", "error", TRUCK_FAILED_TTL)
+            future = Future()
+            future.set_result(None)
+            return future
+        future = _truck_executor.submit(_run_truck, digest, inputs)
+        _truck_jobs[digest] = future
+
+    def remove(done):
+        with _truck_jobs_lock:
+            if _truck_jobs.get(digest) is done:
+                del _truck_jobs[digest]
+
+    # A callback can run synchronously if the job already ended; register unlocked.
+    future.add_done_callback(remove)
+    return future
+
+
+def get_routing(inputs: dict) -> PlanRouting:
+    digest = route_digest(inputs)
+    reason = "no_key"
+    if settings.TOMTOM_API_KEY:
+        future = _truck_job(digest, inputs)
+        try:
+            result = future.result(timeout=TRUCK_WAIT_S)
+        except TimeoutError:
+            reason = "pending"
+        else:
+            if result is not None:
+                return PlanRouting(result.routes, result.provider, True)
+            reason = cache.get(f"route-truck-failed:v1:{digest}", "error")
+
+    def car_route():
+        origin, destination = inputs["origin"], inputs["destination"]
+        return OSRMRouter().routes((origin["lat"], origin["lon"]), (destination["lat"], destination["lon"]),
+                                   datetime.fromisoformat(inputs["departure_utc"]), inputs["cargo_lb"])
+
+    result = singleflight(f"route-car:v1:{digest}", CAR_FALLBACK_TTL, car_route)
+    return PlanRouting(result.routes, result.provider, False, reason == "pending", reason)
+
+
+def truck_route_status(plan_id: str) -> dict | None:
+    plan = cache.get(f"plan:v1:{plan_id}")
+    if plan is None:
+        return None
+    routing = plan["result"]["providers"]["routing"]
+    status = "not_applicable"
+    if not routing["truck_aware"] and settings.TOMTOM_API_KEY and routing.get("fallback_reason") != "no_key":
+        digest = plan.get("route_digest")
+        with _truck_jobs_lock:
+            future = _truck_jobs.get(digest)
+        if _truck_result(digest) is not None:
+            status = "ready"
+        elif cache.get(f"route-truck-failed:v1:{digest}") is not None:
+            status = "failed"
+        elif future is not None and not future.done():
+            status = "pending"
+        else:
+            # Completion publishes to cache before the future becomes done.
+            status = "ready" if _truck_result(digest) is not None else "failed"
+    return {"status": status, "retry_after_s": 3 if status == "pending" else None}
 
 
 def create_plan(inputs: dict) -> dict:
     digest = hashlib.sha256(json.dumps(inputs, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    result = singleflight(f"plan-result:v3:{digest}", 600, lambda: build_plan(inputs), wait_s=30)
-    return result
+    key = f"plan-result:v3:{digest}"
+    routing_key = route_digest(inputs)
+
+    def cached_result():
+        result = cache.get(key)
+        if result is None:
+            return None
+        routing = result["providers"]["routing"]
+        if "truck_pending" not in routing:  # Legacy result without progressive state.
+            return None
+        if not routing["truck_aware"] and settings.TOMTOM_API_KEY:
+            if _truck_result(routing_key) is not None:
+                return None
+            if routing["truck_pending"] and cache.get(f"route-truck-failed:v1:{routing_key}") is not None:
+                return None
+        return result
+
+    # Same shared-cache lock/wait policy as singleflight, with state-dependent TTLs.
+    deadline = time.monotonic() + 30
+    while True:
+        result = cached_result()
+        if result is not None:
+            return result
+        with cache_lock(f"lock:{key}", 35) as acquired:
+            if acquired:
+                result = cached_result()
+                if result is None:
+                    result = build_plan(inputs)
+                    routing = result["providers"]["routing"]
+                    ttl = (3 if routing["truck_pending"] else
+                           min(600, CAR_FALLBACK_TTL) if routing["fallback_reason"] in {"timeout", "error"} else 600)
+                    cache.set(key, result, ttl)
+                return result
+        if time.monotonic() >= deadline:
+            raise ProviderError("Request already in progress; please retry shortly")
+        time.sleep(0.025)
 
 
 def build_plan(inputs: dict) -> dict:
@@ -73,7 +221,13 @@ def build_plan(inputs: dict) -> dict:
         raise ProviderError("No distinct routes found")
     warnings: list[dict[str, str]] = []
     if not routing.truck_aware:
-        warnings.append({"code": "CAR_ROUTING", "message": "car routing: truck restrictions not applied"})
+        messages = {
+            "pending": "Truck route still loading; showing car routing meanwhile.",
+            "timeout": "Truck routing timed out; car routing: truck restrictions not applied.",
+            "error": "Truck routing unavailable; car routing: truck restrictions not applied.",
+            "no_key": "car routing: truck restrictions not applied",
+        }
+        warnings.append({"code": "CAR_ROUTING", "message": messages[routing.fallback_reason]})
     if len(routing.routes) < 3:
         warnings.append({"code": "FEWER_ROUTES", "message": f"Only {len(routing.routes)} distinct routes were found."})
     departure = datetime.fromisoformat(inputs["departure_utc"])
@@ -192,8 +346,10 @@ def build_plan(inputs: dict) -> dict:
                        "rests": rests, "progress": progress_knots(checkpoint_geometry, state["rests"]), **data})
     plan_id = f"p_{uuid4().hex}"
     result = {"plan_id": plan_id, "created_at": iso(datetime.now(timezone.utc)), "inputs": inputs,
-              "providers": {"routing": {"name": routing.provider, "truck_aware": routing.truck_aware},
+              "providers": {"routing": {"name": routing.provider, "truck_aware": routing.truck_aware,
+                                         "truck_pending": routing.truck_pending, "fallback_reason": routing.fallback_reason},
                             "weather": {"name": "open-meteo", "fetched_at": iso(fetched_at)}},
               "warnings": warnings, "recommendation": recommendation, "routes": routes}
-    cache.set(f"plan:v1:{plan_id}", {"result": result, "points": [route.geometry.points for route in routing.routes]}, 3600)
+    cache.set(f"plan:v1:{plan_id}", {"result": result, "points": [route.geometry.points for route in routing.routes],
+                                    "route_digest": route_digest(inputs)}, 3600)
     return result

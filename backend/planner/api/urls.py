@@ -2,7 +2,7 @@ from django.urls import path
 from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
-from .views import GeocodeView, HealthView, HeatmapView, PlansView, HotspotView
+from .views import GeocodeView, HealthView, HeatmapView, PlansView, HotspotView, TruckRouteView
 
 urlpatterns = [
     path("", RedirectView.as_view(url="/api/docs/", permanent=False)),
@@ -14,4 +14,5 @@ urlpatterns = [
     path("geocode", GeocodeView.as_view()),
     path("plans", PlansView.as_view()),
     path("plans/<str:plan_id>/heatmap", HeatmapView.as_view()),
+    path("plans/<str:plan_id>/truck-route", TruckRouteView.as_view()),
 ]

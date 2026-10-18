@@ -14,7 +14,8 @@ from .util import checkpoint_road, distinct_routes, road_label
 
 
 class TomTomRouter:
-    def routes(self, origin: Point, destination: Point, departure: datetime, cargo_lb: float) -> RoutingResult:
+    def routes(self, origin: Point, destination: Point, departure: datetime, cargo_lb: float,
+               *, timeout: float | None = None, retry: bool = True) -> RoutingResult:
         locations = f"{origin[0]},{origin[1]}:{destination[0]},{destination[1]}"
         data = get_json("tomtom", f"https://api.tomtom.com/routing/1/calculateRoute/{locations}/json", {
             "key": settings.TOMTOM_API_KEY, "travelMode": "truck", "vehicleCommercial": "true",
@@ -24,7 +25,7 @@ class TomTomRouter:
             "maxAlternatives": 2,
             "alternativeType": "anyRoute", "instructionsType": "coded", "routeRepresentation": "polyline",
             "traffic": "true",
-        })
+        }, timeout=timeout, retry=retry)
         try:
             routes = [self.normalise(raw, i) for i, raw in enumerate(data["routes"])]
             if not routes:

@@ -41,6 +41,11 @@ remain usable when the daily budget is exhausted.
 1. **GET /api/geocode** to choose origin and destination.
 2. **POST /api/plans** for routes, checkpoints and a weather-based recommendation.
 3. **GET /api/plans/{plan_id}/heatmap** separately to load the corridor overlay.
+4. If `providers.routing.truck_pending` is true, poll
+   **GET /api/plans/{plan_id}/truck-route** every `retry_after_s` seconds (3 while
+   pending). On `ready`, re-POST identical trip inputs to get a truck-aware plan.
+   `failed` ends polling; `not_applicable` means already truck-aware or no key.
+   This status endpoint never calls a provider; expired plans return PLAN_EXPIRED.
 
 ## Risk and load rules
 Comparisons use `Decimal(str(round(x, 2)))`, with no other rounding before classification.
@@ -94,14 +99,25 @@ on-duty window is out of scope. `custom` repeats drive/rest intervals; `none` in
 Drivers remain responsible for legal hours and truck restrictions.
 
 ## Caches, limits and providers
-Identical normalized plan inputs reuse a result for **10 min**. Plans and heatmaps
-are cached **1 hour**; a heatmap 404 means re-POST the plan. Routes cache **6 hours**
-(endpoints rounded to 4 decimals, departure hour, 5,000 lb cargo bucket); geocoding
+Truck-aware and keyless normalized plans reuse a result for **10 min**. Pending
+plans cache at most **3 seconds**, bypassed as soon as a truck result or failure is
+cached; failed truck fallbacks cache at most **5 min**. Plans and heatmaps
+are cached **1 hour**; a heatmap/status 404 means re-POST the plan. TomTom routes
+cache **6 hours**; OSRM routes and truck-failure markers cache **5 min**
+(endpoints rounded to 4 decimals, departure hour, ceil(cargo/5,000 lb), has-key); geocoding
 caches normalized query + limit for **7 days**; weather cells cache **60 min**.
-Limits per IP: **30 plans/min**, **120 geocodes/min**; exceeding them returns 429.
+Limits per IP: **30 plans/min**, **120 geocodes/min**, **60 truck-route polls/min**;
+exceeding them returns 429.
 
-Routing: **TomTom → OSRM** (TomTom requires a configured key). OSRM is car routing:
-truck restrictions are not applied; the response includes a warning. Geocoding:
+Routing: with a key, **TomTom runs in the background** with a **28-second read
+timeout, no retry**. The request waits at most **8 seconds** for TomTom, then uses
+OSRM while the truck job continues. Two truck workers and one job per route digest
+per process bound concurrency. With Redis and several server workers, each process
+may start its own job; completed results/failures are shared. Without a key OSRM is
+used directly. OSRM is car routing: truck restrictions are not applied; a warning
+explains pending, timeout, error or no_key. `providers.routing` always includes
+`name`, `truck_aware`, `truck_pending`, `fallback_reason` (null when truck-aware).
+An old car plan stays a car plan; re-submission builds the upgrade. Geocoding:
 **TomTom → Open-Meteo geocoding → Photon**; keyless Open-Meteo searches place names,
 then Photon handles empty results or failures. Weather uses Open-Meteo. Unavailable
 weather remains Unknown. Above 70% of the daily forecast budget the heatmap uses H3 res 3;

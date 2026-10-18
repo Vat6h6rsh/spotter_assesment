@@ -19,6 +19,125 @@ beforeEach(() => {
   localStorage.clear(); mocks.wake.status = "ready"; sessionStorage.clear();
   mocks.hotspot.mockReset().mockResolvedValue(makeMockHotspot()); mocks.submit.mockReset().mockResolvedValue(false);
 });
+
+describe("showcase lookup narration", () => {
+  const steps = ["Picking 300 points along 30 freight corridors", "Fetching 48-hour forecasts and National Weather Service alerts", "Ranking the toughest stretches", "Planning a real trip through the worst one to check it"];
+  async function pending() {
+    vi.useFakeTimers();
+    let resolve!: (data: ReturnType<typeof makeMockHotspot> | { available: false; reason: string }) => void;
+    mocks.hotspot.mockImplementation(() => new Promise(answer => { resolve = answer; }));
+    const props = { demo: false, busy: false, autoOpen: false, onPlan: vi.fn(), onOwn: vi.fn() };
+    const view = render(<WeatherShowcase {...props} />);
+    await act(async () => {});
+    return { ...view, props, resolve: (data: Parameters<typeof resolve>[0]) => act(async () => resolve(data)) };
+  }
+  function open() {
+    fireEvent.click(screen.getByRole("button", { name: "Today's toughest weather" }));
+    return screen.getByRole("dialog");
+  }
+  function advance(ms: number) { act(() => vi.advanceTimersByTime(ms)); }
+  function current(dialog: HTMLElement, index: number) {
+    const items = within(dialog).getAllByRole("listitem");
+    expect(items[index]).toHaveClass("is-current");
+    expect(items[index]).toHaveAttribute("aria-current", "step");
+    expect(items[index].querySelector(".spinner")).toHaveAttribute("aria-hidden", "true");
+  }
+  it("narrates 1 → 2 → 4 on the scan deadlines, with elapsed and only step live announcements", async () => {
+    await pending(); const dialog = open();
+    expect(dialog).toHaveTextContent("Scanning US freight corridors for the toughest weather in the next 48 hours.");
+    expect(dialog).toHaveTextContent("The first check can take up to a minute. After that it's saved for an hour.");
+    const live = within(dialog).getByRole("status");
+    expect(dialog.querySelectorAll('[aria-live="polite"]')).toHaveLength(1);
+    expect(live).toHaveTextContent(steps[0]); current(dialog, 0);
+    expect(dialog.querySelector(".num")).toBeNull();
+    advance(1199); current(dialog, 0);
+    advance(1); current(dialog, 1); expect(live).toHaveTextContent(steps[1]);
+    advance(3799); expect(dialog.querySelector(".num")).toBeNull();
+    advance(1); expect(dialog.querySelector(".num")).toHaveTextContent("5 s");
+    expect(dialog.querySelector(".num")).toHaveAttribute("aria-hidden", "true");
+    expect(live).toHaveTextContent(steps[1]);
+    advance(14999); current(dialog, 1);
+    advance(1); current(dialog, 3);
+    expect(within(dialog).getAllByRole("listitem")[2]).toHaveClass("is-earlier");
+    expect(within(dialog).getAllByRole("listitem")[2].querySelector(".step-dot")).not.toBeNull();
+    expect(live).toHaveTextContent(steps[3]);
+    advance(29999); expect(dialog).not.toHaveTextContent("Taking longer than usual.");
+    advance(1); expect(dialog).toHaveTextContent("Taking longer than usual. Still checking.");
+    expect(live).toHaveTextContent(steps[3]);
+    expect(within(dialog).queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+  it("offers retry at 60 seconds, aborts the old request and resets the attempt", async () => {
+    await pending(); const dialog = open();
+    const signal = mocks.hotspot.mock.calls[0][0] as AbortSignal;
+    advance(59999); expect(within(dialog).queryByRole("button", { name: "Try again" })).toBeNull();
+    advance(1); fireEvent.click(within(dialog).getByRole("button", { name: "Try again" }));
+    await act(async () => {});
+    expect(signal.aborted).toBe(true); expect(mocks.hotspot).toHaveBeenCalledTimes(2);
+    current(dialog, 0); expect(dialog.querySelector(".num")).toBeNull();
+    expect(dialog).not.toHaveTextContent("Taking longer than usual.");
+    advance(1200); current(dialog, 1);
+  });
+  it("uses the lookup start when opened late or reopened and cleans narration timers on close", async () => {
+    const view = await pending(); advance(10_000); const dialog = open();
+    current(dialog, 1); expect(dialog.querySelector(".num")).toHaveTextContent("10 s");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+    expect(vi.getTimerCount()).toBe(0);
+    advance(15_000); current(open(), 3);
+    view.unmount(); expect(vi.getTimerCount()).toBe(0);
+  });
+  it("switches immediately to the trip when it arrives, without a loading spinner", async () => {
+    const view = await pending(); open(); advance(6000);
+    await view.resolve(makeMockHotspot());
+    expect(screen.getByRole("dialog", { name: title })).toHaveTextContent(makeMockHotspot().headline);
+    expect(screen.getByRole("dialog").querySelector(".showcase-wait")).toBeNull();
+    const button = screen.getByRole("button", { name: "Today's toughest weather" });
+    expect(button).not.toHaveAttribute("aria-busy"); expect(button.querySelector(".spinner")).toBeNull();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("replaces narration with the existing unavailable explanation and retry", async () => {
+    const view = await pending(); open();
+    await view.resolve({ available: false, reason: "Not enough forecast coverage" });
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("No standout trucking weather to show right now.");
+    expect(dialog).toHaveTextContent("Not enough forecast coverage");
+    expect(within(dialog).getByRole("button", { name: "Try again" })).toBeEnabled();
+    expect(dialog.querySelector(".showcase-wait")).toBeNull();
+    expect(screen.getByRole("button", { name: "Today's toughest weather" })).not.toHaveAttribute("aria-busy");
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("waits for waking before starting steps or the lookup clock", async () => {
+    mocks.wake.status = "waking"; const view = await pending(); const dialog = open();
+    expect(dialog).toHaveTextContent("Waiting for the server to wake up first (usually under a minute).");
+    expect(within(dialog).queryByRole("list")).toBeNull();
+    advance(65_000); expect(dialog.querySelector(".num")).toBeNull();
+    expect(mocks.hotspot).not.toHaveBeenCalled();
+    mocks.wake.status = "ready"; view.rerender(<WeatherShowcase {...view.props} />);
+    await act(async () => {});
+    current(dialog, 0); expect(dialog.querySelector(".num")).toBeNull();
+    advance(1200); current(dialog, 1);
+  });
+  it("shows a decorative spinner and busy state on the unchanged button label only without a known trip", async () => {
+    const view = await pending();
+    let button = screen.getByRole("button", { name: "Today's toughest weather" });
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button.querySelector(".spinner")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.queryByRole("dialog")).toBeNull(); view.unmount();
+    sessionStorage.setItem(SHOWCASE_LAST_KEY, JSON.stringify({ at: Date.now(), data: makeMockHotspot() }));
+    render(<WeatherShowcase {...view.props} />);
+    await act(async () => {});
+    button = screen.getByRole("button", { name: "Today's toughest weather" });
+    expect(button).not.toHaveAttribute("aria-busy"); expect(button.querySelector(".spinner")).toBeNull();
+  });
+  it("pauses and resumes the decorative road while the narration keeps advancing", async () => {
+    await pending(); const dialog = open();
+    expect(dialog.querySelector(".waiting-road.compact")).toHaveAttribute("aria-hidden", "true");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Pause animation" }));
+    expect(dialog.querySelector(".waiting-road")).toHaveClass("is-paused");
+    advance(20_000); current(dialog, 3);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Play animation" }));
+    expect(dialog.querySelector(".waiting-road")).not.toHaveClass("is-paused");
+  });
+});
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 describe("daily weather showcase", () => {

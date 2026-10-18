@@ -76,6 +76,7 @@ describe("API resilience", () => {
     await vi.advanceTimersByTimeAsync(2000);
     const result = await pending;
     expect(result.demo).toBe(true);
+    expect(result.data.providers.routing).toMatchObject({ name: "osrm", truck_aware: false, truck_pending: false, fallback_reason: null });
     expect(result.data.warnings.some((w) => w.code === "DEMO")).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -117,6 +118,26 @@ describe("API resilience", () => {
     await assertion;
     await vi.advanceTimersByTimeAsync(2000);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("truck route status", () => {
+  it("encodes plan IDs and forwards cancellation", async () => {
+    const fetchMock = vi.fn((_url, init) => new Promise((_resolve, reject) => init.signal.addEventListener("abort", () => reject(new DOMException("Cancelled", "AbortError")))));
+    vi.stubGlobal("fetch", fetchMock);
+    const { getTruckRouteStatus } = await import("./client");
+    const controller = new AbortController();
+    const pending = getTruckRouteStatus("a/b", controller.signal);
+    const assertion = expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    controller.abort(); await assertion;
+    expect(fetchMock.mock.calls[0][0]).toContain("plans/a%2Fb/truck-route");
+    expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(true);
+  });
+  it("never fetches status in demo mode", async () => {
+    const fetchMock = vi.fn(); vi.stubGlobal("fetch", fetchMock);
+    const { getTruckRouteStatus } = await import("./client");
+    expect(await getTruckRouteStatus("demo", new AbortController().signal, true)).toEqual({ status: "not_applicable", retry_after_s: null });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

@@ -7,13 +7,13 @@ from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, PolymorphicProxySerializer
 from drf_spectacular.types import OpenApiTypes
 
-from .schema import Health, GeocodeResult, PlanRequest, PlanResponse, HeatmapResponse, Error, HotspotAvailable, HotspotUnavailable
-from .examples import PLAN_EXAMPLE, REQUEST_EXAMPLE, GEOCODE_EXAMPLE, HEATMAP_EXAMPLE, HOTSPOT_EXAMPLE, HOTSPOT_UNAVAILABLE_EXAMPLE
+from .schema import Health, GeocodeResult, PlanRequest, PlanResponse, HeatmapResponse, Error, HotspotAvailable, HotspotUnavailable, TruckRouteStatus
+from .examples import PLAN_EXAMPLE, PENDING_PLAN_EXAMPLE, REQUEST_EXAMPLE, GEOCODE_EXAMPLE, HEATMAP_EXAMPLE, HOTSPOT_EXAMPLE, HOTSPOT_UNAVAILABLE_EXAMPLE, TRUCK_ROUTE_EXAMPLES
 
 from planner.providers.base import ProviderError
 from planner.services.geocode_service import geocode
 from planner.services.heatmap_service import get_heatmap
-from planner.services.plan_service import create_plan
+from planner.services.plan_service import create_plan, truck_route_status
 from planner.services.weather_store import budget_usage
 from planner.services.hotspot_service import get_hotspot
 from .serializers import GeocodeSerializer, PlanSerializer
@@ -21,6 +21,11 @@ from .serializers import GeocodeSerializer, PlanSerializer
 
 def provider_error(exc):
     return Response({"error": {"code": "PROVIDER_UNAVAILABLE", "message": str(exc), "field": None}}, status=503)
+
+
+class TruckRouteThrottle(ScopedRateThrottle):
+    # Local rate declaration keeps this endpoint self-contained in the API package.
+    THROTTLE_RATES = {"truck_route": "60/min"}
 
 
 class HotspotView(APIView):
@@ -79,10 +84,10 @@ class PlansView(APIView):
 
     @extend_schema(
         summary="Plan weather-aware truck routes", tags=["Plans"],
-        description="Return up to three routes, owned-mile weather exposure, rest-inclusive ETAs and a risk-first recommendation. departure_local is in the origin's time zone. Identical normalized inputs cache 10 min; 30 plans/min per IP. Load the corridor heatmap separately using plan_id.",
+        description="Return up to three routes, owned-mile weather exposure, rest-inclusive ETAs and a risk-first recommendation. departure_local is in the origin's time zone. TomTom runs in the background with a 28-second read timeout and no retry; wait at most 8 seconds before showing OSRM with truck_pending=true and fallback_reason=pending. Poll /api/plans/{plan_id}/truck-route and re-POST identical inputs when ready. Pending results cache up to 3 seconds and are bypassed immediately on upgrade/failure; failed truck fallbacks cache at most 5 minutes, truck-aware and keyless plans 10 minutes. 30 plans/min per IP. Load the corridor heatmap separately using plan_id.",
         request=PlanRequest,
         responses={200: PlanResponse, 400: OpenApiResponse(Error, "Invalid trip input; field identifies the first error."), 429: OpenApiResponse(Error, "30 plans/min per IP exceeded."), 503: OpenApiResponse(Error, "Routing/provider service unavailable.")},
-        examples=[REQUEST_EXAMPLE, PLAN_EXAMPLE],
+        examples=[REQUEST_EXAMPLE, PLAN_EXAMPLE, PENDING_PLAN_EXAMPLE],
     )
     def post(self, request):
         serializer = PlanSerializer(data=request.data)
@@ -91,6 +96,26 @@ class PlansView(APIView):
             return Response(create_plan(serializer.validated_data))
         except ProviderError as exc:
             return provider_error(exc)
+
+
+class TruckRouteView(APIView):
+    throttle_classes = [TruckRouteThrottle]
+    throttle_scope = "truck_route"
+
+    @extend_schema(
+        summary="Check a plan's background truck route", tags=["Plans"],
+        description="Read cached truck-routing state without calling providers. pending means a job is still running in this process: poll again in retry_after_s=3. ready means a TomTom result is cached: re-POST the same trip inputs to build a truck-aware plan. failed means the truck request failed or no local job/result survived (for example after a restart). not_applicable means this plan is already truck-aware or has no TomTom key. All non-pending states have retry_after_s=null. Unknown/expired one-hour plans use the same PLAN_EXPIRED error as heatmaps. 60 requests/min per IP.",
+        parameters=[OpenApiParameter("plan_id", OpenApiTypes.STR, location=OpenApiParameter.PATH, required=True,
+                                     description="Opaque plan_id from POST /api/plans; cached one hour.")],
+        responses={200: TruckRouteStatus, 404: OpenApiResponse(Error, "Unknown or expired plan (PLAN_EXPIRED). Re-submit the trip."),
+                   429: OpenApiResponse(Error, "60 truck-route status requests/min per IP exceeded.")},
+        examples=TRUCK_ROUTE_EXAMPLES,
+    )
+    def get(self, request, plan_id):
+        result = truck_route_status(plan_id)
+        if result is None:
+            return Response({"error": {"code": "PLAN_EXPIRED", "message": "Plan expired; submit it again.", "field": None}}, status=404)
+        return Response(result)
 
 
 class HeatmapView(APIView):

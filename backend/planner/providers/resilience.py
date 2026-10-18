@@ -54,11 +54,13 @@ def singleflight(key: str, ttl: int, compute: Callable[[], T], wait_s: float = 1
         time.sleep(0.025)
 
 
-def get_json(provider: str, url: str, params: dict[str, str | int | float], timeout: float | None = None) -> dict | list:
+def get_json(provider: str, url: str, params: dict[str, str | int | float], timeout: float | None = None,
+             *, retry: bool = True) -> dict | list:
     if cache.get(f"circuit:{provider}:open"):
         raise ProviderError(f"{provider} temporarily unavailable")
     last_error: Exception | None = None
-    for attempt in range(2):
+    attempts = 2 if retry else 1
+    for attempt in range(attempts):
         try:
             response = _client.get(url, params=params, **({"timeout": httpx.Timeout(timeout, connect=2.0)} if timeout else {}))
             response.raise_for_status()
@@ -77,7 +79,7 @@ def get_json(provider: str, url: str, params: dict[str, str | int | float], time
         except (httpx.HTTPError, ValueError) as exc:
             last_error = exc
             retryable = not isinstance(exc, httpx.HTTPStatusError) or exc.response.status_code in {408, 429} or exc.response.status_code >= 500
-            if not retryable or attempt == 1:
+            if not retryable or attempt == attempts - 1:
                 break
             time.sleep(random.uniform(0.05, 0.15))
     cache.add(f"circuit:{provider}:failures", 0, 300)

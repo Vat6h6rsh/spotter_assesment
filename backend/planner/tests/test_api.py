@@ -27,7 +27,8 @@ def test_full_plan_contract_idempotency_and_heatmap(client, plan_request, replay
     assert plan["plan_id"].startswith("p_") and plan["created_at"].endswith("Z")
     assert plan["inputs"]["origin_tz"] == "America/Chicago"
     assert plan["inputs"]["departure_utc"].endswith("Z")
-    assert plan["providers"]["routing"] == {"name": "osrm", "truck_aware": False}
+    assert plan["providers"]["routing"] == {"name": "osrm", "truck_aware": False,
+                                            "truck_pending": False, "fallback_reason": "no_key"}
     assert {w["code"] for w in plan["warnings"]} >= {"CAR_ROUTING", "FEWER_ROUTES"}
     assert set(plan["recommendation"]) == {"status", "route_id", "reasons", "tradeoff", "departure_advice"}
     assert [route["id"] for route in plan["routes"]] == ["A", "B"]

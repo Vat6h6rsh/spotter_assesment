@@ -5,6 +5,7 @@ import type {
   Plan,
   PlanRequest,
   WeatherHotspot,
+  TruckRouteStatus,
 } from "./types";
 const API_BASE = (
   import.meta.env.VITE_API_BASE || "http://localhost:8000"
@@ -149,7 +150,14 @@ export async function createPlan(inputs: PlanRequest, signal: AbortSignal) {
   }
   const { makeMockPlan } = await import("./mock");
   await delay(650, signal);
-  return { data: makeMockPlan(requestBody), demo: true };
+  const data = makeMockPlan(requestBody);
+  data.providers.routing = { name: "osrm", truck_aware: false, truck_pending: false, fallback_reason: null };
+  return { data, demo: true };
+}
+export async function getTruckRouteStatus(planId: string, signal: AbortSignal, demo = forcedDemo): Promise<TruckRouteStatus> {
+  signal.throwIfAborted();
+  if (demo || forcedDemo) return { status: "not_applicable", retry_after_s: null };
+  return request<TruckRouteStatus>(`plans/${encodeURIComponent(planId)}/truck-route`, signal);
 }
 export async function getHeatmap(
   plan: Plan,

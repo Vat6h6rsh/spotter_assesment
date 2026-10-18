@@ -16,6 +16,7 @@ import { Icon } from "./components/Icon";
 import { PanelErrorBoundary } from "./components/PanelErrorBoundary";
 import { ServerWakeCard, ServerWakeChip } from "./components/ServerWakeChip";
 import { PlanningWait } from "./components/PlanningWait";
+import { CarRoutingChip } from "./components/CarRoutingChip";
 import "./App.css";
 const MapView = lazy(() => import("./map/MapView"));
 type Snap = "peek" | "half" | "full";
@@ -70,7 +71,7 @@ function App() {
       previous = next;
     });
   }, []);
-  function edit() { setPage("plan"); setEditing(true); setCollapsed(false); setSnap("full"); setCheckpoints(false); }
+  function edit() { planner.beginEdit(); setPage("plan"); setEditing(true); setCollapsed(false); setSnap("full"); setCheckpoints(false); }
   function openList() {
     const selected = planner.get().selectedRoute;
     if (selected) planner.selectCheckpoint(selected, null);
@@ -95,7 +96,7 @@ function App() {
       </nav>
       <div className="header-right">
         <ServerWakeChip />
-        {plan && !plan.providers.routing.truck_aware && <span className="header-chip car-chip" title="Car routing: truck restrictions not applied"><Icon name="warning" size={16} /><span>Car routing<span className="sr-only">: truck restrictions not applied</span></span></span>}
+        <CarRoutingChip />
         {offline && <span className="header-chip"><Icon name="offline" size={16} />Offline</span>}
         {demo && <span className="demo-badge">Demo data</span>}
       </div>

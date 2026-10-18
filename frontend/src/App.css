@@ -14,6 +14,14 @@
 .header-chip, .demo-badge, .server-wake-chip { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 24px; padding: var(--sp-1) var(--sp-2); border-radius: var(--r-sm); font-size: var(--fs-caption); letter-spacing: var(--caption-tracking); line-height: 1.333333; background: var(--nav); color: var(--nav-active); white-space: nowrap; }
 .header-chip { border: 1px solid var(--nav-text); }
 .car-chip { color: #ecd083; border-color: #ecd083; }
+.car-chip-wrap { position: relative; display: inline-flex; pointer-events: auto; }
+.car-chip .spinner { width: var(--sp-3); height: var(--sp-3); }
+.car-routing-tip { position: absolute; top: calc(100% + var(--sp-2)); right: 112px; z-index: 12; width: 280px; max-width: calc(100vw - var(--sp-4)); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); background: var(--text); color: var(--surface); font-size: var(--fs-caption); line-height: 1.333333; white-space: normal; box-shadow: var(--elev-2); pointer-events: none; animation: car-routing-tip 1500ms var(--ease-standard) both; }
+.car-routing-tip::before { content: ""; position: absolute; bottom: 100%; right: var(--sp-4); border: 6px solid transparent; border-bottom-color: var(--text); }
+@keyframes car-routing-tip { 0% { opacity: 0; } 15%, 80% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .car-routing-tip, .car-chip .spinner { animation: none; }
+}
 .demo-badge { color: var(--nav-text); }
 .mobile-trip, .app-header nav .mobile-edit { display: none; }
 .planning-page { display: flex; flex: 1; flex-direction: column; min-height: 0; }
@@ -249,6 +257,13 @@ input.forecast-slider { --position: 0%; appearance: none; min-height: 44px; heig
 .weather-showcase .showcase-source { margin: var(--sp-4) 0 0; }
 .showcase-trigger { position: relative; }
 .showcase-button { width: 100%; }
+.showcase-button > .spinner { width: var(--sp-3); height: var(--sp-3); flex-shrink: 0; }
+.showcase-wait { display: grid; gap: var(--sp-3); }
+.showcase-wait > p { margin: 0; }
+.showcase-wait .planning-steps li { align-items: flex-start; }
+.showcase-wait .planning-steps li > :first-child { flex-shrink: 0; margin-top: var(--sp-1); }
+.showcase-wait .waiting-actions { flex-wrap: wrap; }
+.showcase-wait .waiting-actions > button { margin-left: auto; }
 .showcase-button[data-hint] { animation: showcase-glow 1050ms var(--ease-standard) 2; }
 @keyframes showcase-glow {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 50%, transparent); }
@@ -261,6 +276,7 @@ input.forecast-slider { --position: 0%; appearance: none; min-height: 44px; heig
 @media (prefers-reduced-motion: reduce) {
   .showcase-button[data-hint] { animation: none; box-shadow: 0 0 0 2px var(--primary); }
   .showcase-tip { animation: none; }
+  .showcase-button > .spinner { animation: none; }
 }
 .weather-icon { display: inline-flex; vertical-align: middle; flex-shrink: 0; }
 .weather-icon img { display: block; width: 100%; height: 100%; }
@@ -346,6 +362,12 @@ input.forecast-slider { --position: 0%; appearance: none; min-height: 44px; heig
   .app-header nav { margin-left: auto; gap: 0; }
   .app-header nav button, .app-header nav .mobile-edit { display: flex; width: 48px; min-width: 48px; padding: 0; justify-content: center; border: 0; }
   .header-right { position: absolute; top: 64px; left: var(--sp-3); max-width: calc(100% - 88px); flex-wrap: wrap; justify-content: flex-start; gap: var(--sp-1); pointer-events: none; }
+  .app-header:has(.car-chip) .mobile-trip { visibility: hidden; }
+  .app-header:has(.car-chip) .brand img { width: 56px; height: auto; }
+  .header-right .car-chip-wrap { position: fixed; top: var(--sp-1); left: 76px; right: 104px; height: 48px; align-items: center; }
+  .header-right .car-chip { white-space: normal; line-height: 1.333333; }
+  .header-right .car-routing-tip { top: calc(100% + var(--sp-2)); left: -68px; right: auto; width: min(240px, calc(100vw - 88px)); }
+  .header-right .car-routing-tip::before { right: auto; left: 80px; }
   .header-chip, .demo-badge, .server-wake-chip { padding: var(--sp-1) var(--sp-2); box-shadow: var(--elev-1); white-space: normal; }
   .map-caption { top: 56px; }
   .control-room { position: relative; }

@@ -4,6 +4,7 @@ import type { PlanRequest } from "../api/types";
 const network = vi.hoisted(() => ({
   createPlan: vi.fn(),
   getHeatmap: vi.fn(),
+  getTruckRouteStatus: vi.fn(),
 }));
 vi.mock("../api/client", () => ({
   ...network,
@@ -34,6 +35,14 @@ beforeEach(() => {
 });
 afterEach(() => planner.cancel());
 describe("independent plan and heatmap lifecycle", () => {
+  it("never polls demo plans, even if their pending flag is set", async () => {
+    const plan = makeMockPlan(inputs);
+    plan.providers.routing.truck_pending = true;
+    network.createPlan.mockResolvedValue({ data: plan, demo: true });
+    await planner.submit(inputs);
+    expect(planner.get().truckUpgrade).toBe("idle");
+    expect(network.getTruckRouteStatus).not.toHaveBeenCalled();
+  });
   it("renews an expired plan once on a heatmap 404 and caches the renewed snapshot", async () => {
     const first = { ...makeMockPlan(inputs), plan_id: "expired" },
       second = { ...makeMockPlan(inputs), plan_id: "renewed" };

@@ -62,6 +62,13 @@ class GeocodeResult(s.Serializer):
 class RoutingProvider(s.Serializer):
     name = s.ChoiceField(choices=("tomtom", "osrm"), help_text="Actual routing provider used for this plan.")
     truck_aware = s.BooleanField(help_text="True for TomTom truck routing; false for OSRM car routing without truck restrictions.")
+    truck_pending = s.BooleanField(help_text="True while TomTom continues in the background; poll the plan's truck-route endpoint and re-POST identical inputs when ready.")
+    fallback_reason = s.ChoiceField(choices=("no_key", "pending", "timeout", "error"), allow_null=True, help_text="Null for truck-aware routing; otherwise no_key, pending, timeout or error explains the OSRM fallback.")
+
+
+class TruckRouteStatus(s.Serializer):
+    status = s.ChoiceField(choices=("pending", "ready", "failed", "not_applicable"), help_text="Pending: local job running; ready: truck result cached, re-POST the same trip; failed: marker or no surviving job; not_applicable: plan already truck-aware or no key.")
+    retry_after_s = s.IntegerField(allow_null=True, min_value=1, help_text="3 seconds while pending; null for every other status. No provider calls are made by this endpoint.")
 
 
 class WeatherProvider(s.Serializer):
@@ -70,7 +77,7 @@ class WeatherProvider(s.Serializer):
 
 
 class Providers(s.Serializer):
-    routing = RoutingProvider(help_text="Routing source and truck-awareness flag.")
+    routing = RoutingProvider(help_text="Routing source, truck-awareness, pending flag and fallback reason; all four keys are always present.")
     weather = WeatherProvider(help_text="Weather source and freshness.")
 
 

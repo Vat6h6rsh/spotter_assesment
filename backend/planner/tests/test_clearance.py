@@ -5,7 +5,7 @@ import pytest
 
 from planner.domain.geometry import Geometry, M_PER_MI
 from planner.domain.weather import WeatherSeries, clearance, sample
-from planner.providers.base import Route, RoutingResult
+from planner.providers.base import Route
 from planner.services import plan_service
 
 START = datetime(2026, 10, 17, tzinfo=timezone.utc)
@@ -72,7 +72,8 @@ def test_other_hazard_must_also_clear():
 
 def test_plan_uses_final_slowed_eta_and_never_searches_advisor_offsets(monkeypatch):
     geometry = Geometry([(40., -100.), (40., -99.)], [0., 100 * M_PER_MI], [0., 7200.])
-    monkeypatch.setattr(plan_service, 'get_routing', lambda inputs: RoutingResult([Route(geometry, 'Test')], 'osrm', False))
+    monkeypatch.setattr(plan_service, 'get_routing', lambda inputs: plan_service.PlanRouting(
+        [Route(geometry, 'Test')], 'osrm', False, fallback_reason='no_key'))
     data = forecast()
     data.rain[:] = [0.6] * len(data.rain)
     data.gust[10:], data.rain[10:] = [0.] * 50, [0.] * 50
